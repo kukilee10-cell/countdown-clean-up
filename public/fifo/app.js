@@ -438,6 +438,7 @@
      ────────────────────────────────────────────────────────── */
   const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
   const DOW    = ['S','M','T','W','T','F','S'];
+  const WEEKEND = [0, 6]; // Sun, Sat
 
   const cal = { year: null, month: null };
 
@@ -474,26 +475,26 @@
     const firstDay = new Date(cal.year, cal.month, 1);
     const startingDow = firstDay.getDay();
     const totalDays = new Date(cal.year, cal.month + 1, 0).getDate();
+    const onCurrentMonth = (cal.year === now.getFullYear() && cal.month === now.getMonth());
 
     let html = `
       <section class="cal-card" aria-label="Calendar">
-        <div class="cal-head">
-          <div class="cal-title">
-            <span aria-hidden="true">📅</span>
-            <span class="cal-month">${MONTHS[cal.month]}</span>
-            <span>${cal.year}</span>
+        <header class="cal-head">
+          <div class="cal-title-block">
+            <h2 class="cal-title">
+              <span class="cal-month">${MONTHS[cal.month]}</span>
+              <span class="cal-year">${cal.year}</span>
+            </h2>
+            <div class="cal-sub" aria-hidden="true">Swipe ← → to change month</div>
           </div>
-          <div class="cal-nav">
-            <button class="cal-nav-btn today" data-action="cal-today" aria-label="Jump to today">Today</button>
-            <button class="cal-nav-btn" data-action="cal-prev"  aria-label="Previous month">‹</button>
-            <button class="cal-nav-btn" data-action="cal-next"  aria-label="Next month">›</button>
-          </div>
-        </div>
-        <div class="cal-grid" role="grid">`;
+          ${onCurrentMonth ? '' : `<button class="cal-today-btn" data-action="cal-today" aria-label="Jump to today">Today</button>`}
+        </header>
+        <div class="cal-grid" role="grid" aria-label="${MONTHS[cal.month]} ${cal.year}">`;
 
-    for (const d of DOW) {
-      html += `<div class="cal-dow" role="columnheader" aria-label="${d}">${d}</div>`;
-    }
+    DOW.forEach((d, i) => {
+      const cls = WEEKEND.includes(i) ? 'cal-dow weekend' : 'cal-dow';
+      html += `<div class="${cls}" role="columnheader" aria-label="${d}">${d}</div>`;
+    });
     for (let i = 0; i < startingDow; i++) {
       html += `<div class="cal-day empty" aria-hidden="true"></div>`;
     }
@@ -502,6 +503,7 @@
       const dObj = new Date(cal.year, cal.month, d);
       const dateStr = isoDate(dObj);
       const isToday = dObj.getTime() === now.getTime();
+      const isWeekend = WEEKEND.includes(dObj.getDay());
       const status = dayStatus(state, dObj);
       const remCount = reminders[dateStr]?.length || 0;
 
@@ -510,23 +512,33 @@
         status.kind === 'on-site' ? 'on-site' : status.kind === 'rr' ? 'rr' : '',
         isToday ? 'today' : '',
         status.isFlyHome ? 'fly-home' : '',
+        isWeekend ? 'weekend' : '',
       ].filter(Boolean).join(' ');
 
       const remDot = remCount > 0
-        ? `<span class="cal-rem${remCount > 1 ? ' multi' : ''}" aria-label="${remCount} reminder${remCount > 1 ? 's' : ''}"></span>`
+        ? `<span class="cal-rem${remCount > 1 ? ' multi' : ''}" aria-hidden="true"></span>`
         : '';
+      const statusBar = status.kind === 'on-site' || status.kind === 'rr'
+        ? `<span class="cal-bar" aria-hidden="true"></span>` : '';
 
-      const label = `${dateStr}${remCount ? ` (${remCount} reminder${remCount > 1 ? 's' : ''})` : ''}`;
-      html += `<button class="${cls}" data-action="cal-open" data-date="${dateStr}" aria-label="${label}">${d}${remDot}</button>`;
+      const parts = [
+        dObj.toLocaleDateString('en-AU', { weekday:'long', day:'numeric', month:'long' }),
+        isToday ? 'today' : '',
+        status.kind === 'on-site' ? 'on site' : status.kind === 'rr' ? 'R and R' : '',
+        status.isFlyHome ? 'fly home' : '',
+        remCount ? `${remCount} reminder${remCount > 1 ? 's' : ''}` : '',
+      ].filter(Boolean).join(', ');
+
+      html += `<button class="${cls}" data-action="cal-open" data-date="${dateStr}" aria-label="${parts}"><span class="cal-num">${d}</span>${statusBar}${remDot}</button>`;
     }
 
     html += '</div>';
     if (state) {
       html += `
-        <div class="cal-legend">
-          <span class="lg-on">● On Site</span>
-          <span class="lg-rr">● R&amp;R</span>
-          <span class="lg-rem">● Reminder</span>
+        <div class="cal-legend" aria-label="Legend">
+          <span class="lg-item"><span class="lg-swatch lg-on"></span>On site</span>
+          <span class="lg-item"><span class="lg-swatch lg-rr"></span>R&amp;R</span>
+          <span class="lg-item"><span class="lg-swatch lg-rem"></span>Reminder</span>
         </div>`;
     }
     html += '</section>';
