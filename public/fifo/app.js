@@ -1219,6 +1219,8 @@
     // Hero carousel
     'hero-dot': (t) => goHeroSlide(parseInt(t.dataset.idx, 10)),
     'open-alarm-from-hero': () => { openPanel(); openSubAlarm(); },
+    'open-notes-from-hero': () => { openPanel(); openSubNotes(); },
+    'open-df-from-hero':    () => { openPanel(); openSubDontForget(); },
 
     // Roster
     'save-roster':  saveRosterSub,
