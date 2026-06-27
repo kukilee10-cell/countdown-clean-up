@@ -836,6 +836,32 @@
     document.body.style.overflow = '';
   };
 
+  /* ──────────────────────────────────────────────────────────
+     HERO CAROUSEL — scroll-snap with dot indicators
+     Always opens on slide 0. Swipe is native horizontal scroll.
+     ────────────────────────────────────────────────────────── */
+  const setupHeroCarousel = () => {
+    const car = $('hero-carousel');
+    const dots = $('hero-dots');
+    if (!car || !dots) return;
+    car.scrollLeft = 0;
+    let raf = null;
+    const updateDots = () => {
+      const w = car.clientWidth || 1;
+      const idx = Math.round(car.scrollLeft / w);
+      dots.querySelectorAll('.hero-dot').forEach((d, i) => d.classList.toggle('active', i === idx));
+    };
+    car.addEventListener('scroll', () => {
+      if (raf) cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(updateDots);
+    }, { passive: true });
+  };
+  const goHeroSlide = (idx) => {
+    const car = $('hero-carousel');
+    if (!car) return;
+    car.scrollTo({ left: car.clientWidth * idx, behavior: 'smooth' });
+  };
+
   const menuBtn = (icon, label, sub, action) => `
     <button class="settings-menu-btn" data-action="${action}">
       <span class="smb-icon">${icon}</span>
@@ -1189,6 +1215,10 @@
     'open-dont-forget': openSubDontForget,
     'open-notes':       openSubNotes,
     'open-backup':      openSubBackup,
+
+    // Hero carousel
+    'hero-dot': (t) => goHeroSlide(parseInt(t.dataset.idx, 10)),
+    'open-alarm-from-hero': () => { openPanel(); openSubAlarm(); },
 
     // Roster
     'save-roster':  saveRosterSub,
