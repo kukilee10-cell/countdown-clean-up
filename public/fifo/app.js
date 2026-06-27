@@ -678,13 +678,13 @@
 
     if (!roster) {
       el.innerHTML = `
-        ${buildCalendar()}
         <div class="empty-state">
           <div class="empty-icon">⛏️</div>
           <div class="empty-title">Set up your roster</div>
           <div class="empty-sub">Enter your swing start date and roster pattern to start counting down.</div>
           <button class="cta-btn" data-action="open-panel">Enter Roster Details</button>
         </div>
+        ${buildCalendar()}
         <div class="alarm-status-row hidden" id="alarm-status-line"></div>`;
       renderAlarmStatus();
       return;
@@ -698,39 +698,13 @@
     const pbClass = isOnSwing ? '' : 'done';
     const now = today();
 
-    const statusCard = `
-      <div class="stat-card wide status-card ${isOnSwing ? 'on-site' : 'on-rr'}">
-        <div class="stat-label">📅 Today’s Status</div>
-        <div class="stat-value">
-          ${isOnSwing ? '🟠 On Site' : '🟢 On R&R'} · ${formatDate(now)}
-        </div>
-      </div>`;
-
-    let shiftCard = '';
-    if (isOnSwing) {
-      shiftCard = shiftType === 'night'
-        ? `<div class="shift-card">
-             <div class="shift-card-icon">🌙</div>
-             <div>
-               <div class="shift-card-title">Night Shift Active</div>
-               <div class="shift-card-sub">Sleep tight during the day, mate. Block out that sun.</div>
-             </div>
-           </div>`
-        : `<div class="shift-card day">
-             <div class="shift-card-icon">☀️</div>
-             <div>
-               <div class="shift-card-title">Day Shift Active</div>
-               <div class="shift-card-sub">Stay hydrated. Keep grinding under the heat.</div>
-             </div>
-           </div>`;
-    }
-
     const heroSub = isOnSwing
       ? `Fly home <strong>${daysLeft === 0 ? 'today! ✈️' : formatDate(curFlyHome)}</strong>`
       : `Back on site <strong>${formatDate(nextSwing || curFlyHome)}</strong>`;
 
-    const hero = `
-      <div class="hero ${isOnSwing ? '' : 'on-rr'}">
+    // --- Card 1: Countdown ---
+    const cardCountdown = `
+      <article class="hero-card hero ${isOnSwing ? '' : 'on-rr'}">
         <div class="hero-label">${isOnSwing ? '⛏️ Days Left on Site' : '🏡 Days Left at Home'}</div>
         <div class="hero-number ${hc}">${heroNum}</div>
         <div class="hero-unit">${heroNum === 1 ? 'day' : 'days'}</div>
@@ -741,39 +715,111 @@
           <span>${pct}%</span>
           <span>${isOnSwing ? 'Day ' + daysOn : 'Back on site'}</span>
         </div>
-      </div>`;
-
-    let dates = '';
-    if (isOnSwing) {
-      dates = `
-        <div class="stat-card compact">
-          <div class="stat-label">✈️ Fly Home</div>
-          <div class="stat-value date-val next-date-value accent">${formatDate(curFlyHome)}</div>
-          <div class="stat-sub">Next travel day</div>
+        <div class="hero-status-chip ${isOnSwing ? 'on-site' : 'on-rr'}">
+          ${isOnSwing ? '🟠 On Site' : '🟢 On R&R'} · ${formatDate(now)}
         </div>
-        <div class="stat-card compact">
-          <div class="stat-label">🛫 Return To Site</div>
-          <div class="stat-value date-val next-date-value text">${formatDate(addDays(curFlyHome, daysOff))}</div>
-          <div class="stat-sub">Next roster start</div>
-        </div>`;
-    } else {
-      dates = `
-        <div class="stat-card wide compact" style="text-align:center;">
-          <div class="stat-label">🛫 Return To Site</div>
-          <div class="stat-value date-val next-date-value wide ok">${formatDate(nextSwing || curEnd)}</div>
-          <div class="stat-sub">Next roster start</div>
-        </div>`;
-    }
+      </article>`;
+
+    // --- Card 2: Travel ---
+    const flyHomeDate = curFlyHome;
+    const returnDate  = isOnSwing ? addDays(curFlyHome, daysOff) : (nextSwing || curEnd);
+    const flyHomeIn   = isOnSwing ? daysLeft : 0;
+    const returnIn    = isOnSwing ? daysLeft + daysOff : offLeft;
+    const cardTravel = `
+      <article class="hero-card travel-card">
+        <div class="hero-card-title">✈️ Travel</div>
+        <div class="travel-row">
+          <div class="travel-label">Fly Home</div>
+          <div class="travel-date accent">${formatDate(flyHomeDate)}</div>
+          <div class="travel-meta">${isOnSwing
+              ? (flyHomeIn === 0 ? 'Today ✈️' : `in ${flyHomeIn} day${flyHomeIn === 1 ? '' : 's'}`)
+              : 'Currently home'}</div>
+        </div>
+        <div class="travel-divider"></div>
+        <div class="travel-row">
+          <div class="travel-label">Return to Site</div>
+          <div class="travel-date ok">${formatDate(returnDate)}</div>
+          <div class="travel-meta">in ${returnIn} day${returnIn === 1 ? '' : 's'}</div>
+        </div>
+        ${shiftType ? `<div class="travel-foot">${shiftType === 'night' ? '🌙 Night shift rotation' : '☀️ Day shift rotation'}</div>` : ''}
+      </article>`;
+
+    // --- Card 3: Planner ---
+    const notesText  = localStorage.getItem(KEYS.notes) || '';
+    const dfText     = localStorage.getItem(KEYS.dontForget) || '';
+    const dfItems    = dfText.split('\n').map(s => s.trim()).filter(Boolean);
+    const notesPrev  = notesText.trim().slice(0, 140);
+    const cardPlanner = `
+      <article class="hero-card planner-card">
+        <div class="hero-card-title">📝 Planner</div>
+        <button class="planner-block" data-action="open-notes-from-hero">
+          <div class="planner-block-head">
+            <span>Notes</span>
+            <span class="planner-chev">›</span>
+          </div>
+          <div class="planner-block-body">${
+            notesPrev ? esc(notesPrev) + (notesText.length > 140 ? '…' : '') : '<em>Tap to add notes for this swing</em>'
+          }</div>
+        </button>
+        <button class="planner-block" data-action="open-df-from-hero">
+          <div class="planner-block-head">
+            <span>Checklist</span>
+            <span class="planner-count">${dfItems.length} item${dfItems.length === 1 ? '' : 's'}</span>
+            <span class="planner-chev">›</span>
+          </div>
+          <div class="planner-block-body">${
+            dfItems.length
+              ? dfItems.slice(0, 3).map(s => `• ${esc(s.replace(/^[•\-\*]\s*/, ''))}`).join('<br>')
+                  + (dfItems.length > 3 ? `<br><span class="muted">+${dfItems.length - 3} more</span>` : '')
+              : '<em>Tap to add packing & check-in items</em>'
+          }</div>
+        </button>
+      </article>`;
+
+    // --- Card 4: Alarm ---
+    const a = loadAlarm();
+    const sp = loadSpotify();
+    const cardAlarm = `
+      <article class="hero-card alarm-card">
+        <div class="hero-card-title">⏰ Alarm</div>
+        <div class="alarm-time-display ${a.on ? 'on' : 'off'}">
+          <span class="alarm-big">${fmt12(a.time)}</span>
+          <span class="alarm-state">${a.on ? 'ARMED' : 'OFF'}</span>
+        </div>
+        <div class="alarm-row-grid">
+          <div class="alarm-mini">
+            <div class="alarm-mini-label">Snooze</div>
+            <div class="alarm-mini-val">${a.snooze || 10} min</div>
+          </div>
+          <div class="alarm-mini">
+            <div class="alarm-mini-label">Spotify</div>
+            <div class="alarm-mini-val">${sp.url ? 'Linked' : 'Not set'}</div>
+          </div>
+        </div>
+        <div class="alarm-actions">
+          <button class="alarm-act-btn primary" data-action="open-alarm-from-hero">Alarm Settings</button>
+          <button class="alarm-act-btn" data-action="open-spotify">🎵 Open Spotify</button>
+        </div>
+      </article>`;
+
+    const cards = [cardCountdown, cardTravel, cardPlanner, cardAlarm];
+    const carousel = `
+      <section class="hero-carousel-wrap" aria-label="Dashboard">
+        <div class="hero-carousel" id="hero-carousel" role="region" aria-roledescription="carousel">
+          ${cards.map((c, i) => `<div class="hero-slide" data-idx="${i}">${c}</div>`).join('')}
+        </div>
+        <div class="hero-dots" id="hero-dots" role="tablist">
+          ${cards.map((_, i) => `<button class="hero-dot${i === 0 ? ' active' : ''}" data-action="hero-dot" data-idx="${i}" aria-label="Card ${i + 1}"></button>`).join('')}
+        </div>
+      </section>`;
 
     el.innerHTML = `
+      ${carousel}
       ${buildCalendar()}
-      ${statusCard}
-      ${shiftCard}
-      ${hero}
-      <div class="stat-grid">${dates}</div>
       <div class="alarm-status-row hidden" id="alarm-status-line"></div>`;
 
     renderAlarmStatus();
+    setupHeroCarousel();
   };
 
   /* ──────────────────────────────────────────────────────────
@@ -788,6 +834,32 @@
     stopAlarmSound();
     $('overlay').classList.remove('open');
     document.body.style.overflow = '';
+  };
+
+  /* ──────────────────────────────────────────────────────────
+     HERO CAROUSEL — scroll-snap with dot indicators
+     Always opens on slide 0. Swipe is native horizontal scroll.
+     ────────────────────────────────────────────────────────── */
+  const setupHeroCarousel = () => {
+    const car = $('hero-carousel');
+    const dots = $('hero-dots');
+    if (!car || !dots) return;
+    car.scrollLeft = 0;
+    let raf = null;
+    const updateDots = () => {
+      const w = car.clientWidth || 1;
+      const idx = Math.round(car.scrollLeft / w);
+      dots.querySelectorAll('.hero-dot').forEach((d, i) => d.classList.toggle('active', i === idx));
+    };
+    car.addEventListener('scroll', () => {
+      if (raf) cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(updateDots);
+    }, { passive: true });
+  };
+  const goHeroSlide = (idx) => {
+    const car = $('hero-carousel');
+    if (!car) return;
+    car.scrollTo({ left: car.clientWidth * idx, behavior: 'smooth' });
   };
 
   const menuBtn = (icon, label, sub, action) => `
@@ -1143,6 +1215,12 @@
     'open-dont-forget': openSubDontForget,
     'open-notes':       openSubNotes,
     'open-backup':      openSubBackup,
+
+    // Hero carousel
+    'hero-dot': (t) => goHeroSlide(parseInt(t.dataset.idx, 10)),
+    'open-alarm-from-hero': () => { openPanel(); openSubAlarm(); },
+    'open-notes-from-hero': () => { openPanel(); openSubNotes(); },
+    'open-df-from-hero':    () => { openPanel(); openSubDontForget(); },
 
     // Roster
     'save-roster':  saveRosterSub,
