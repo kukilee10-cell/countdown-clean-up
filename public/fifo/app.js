@@ -776,33 +776,7 @@
         </button>
       </article>`;
 
-    // --- Card 4: Alarm ---
-    const a = loadAlarm();
-    const sp = loadSpotify();
-    const cardAlarm = `
-      <article class="hero-card alarm-card">
-        <div class="hero-card-title">⏰ Alarm</div>
-        <div class="alarm-time-display ${a.on ? 'on' : 'off'}">
-          <span class="alarm-big">${fmt12(a.time)}</span>
-          <span class="alarm-state">${a.on ? 'ARMED' : 'OFF'}</span>
-        </div>
-        <div class="alarm-row-grid">
-          <div class="alarm-mini">
-            <div class="alarm-mini-label">Snooze</div>
-            <div class="alarm-mini-val">${a.snooze || 10} min</div>
-          </div>
-          <div class="alarm-mini">
-            <div class="alarm-mini-label">Spotify</div>
-            <div class="alarm-mini-val">${sp.url ? 'Linked' : 'Not set'}</div>
-          </div>
-        </div>
-        <div class="alarm-actions">
-          <button class="alarm-act-btn primary" data-action="open-alarm-from-hero">Alarm Settings</button>
-          <button class="alarm-act-btn" data-action="open-spotify">🎵 Open Spotify</button>
-        </div>
-      </article>`;
-
-    const cards = [cardCountdown, cardTravel, cardPlanner, cardAlarm];
+    const cards = [cardCountdown, cardTravel, cardPlanner];
     const carousel = `
       <section class="hero-carousel-wrap" aria-label="Dashboard">
         <div class="hero-carousel" id="hero-carousel" role="region" aria-roledescription="carousel">
@@ -884,10 +858,7 @@
       <div class="panel-title">Settings</div>
       ${menuBtn('📅', 'Roster &amp; Shift', 'Swing dates, shifts &amp; pattern', 'open-roster')}
       ${menuBtn('⏰', 'Alarm', alarmSub, 'open-alarm')}
-      ${menuBtn('🎵', 'Spotify', spSub, 'open-spotify-sub')}
-      ${menuBtn('📌', "Don't Forget List", 'Packing &amp; check-in list', 'open-dont-forget')}
-      ${menuBtn('📝', 'Notes', 'Swing notes', 'open-notes')}
-      ${menuBtn('💾', 'Backup &amp; Restore', 'Backup local files offline', 'open-backup')}`;
+      ${menuBtn('🎵', 'Spotify', spSub, 'open-spotify-sub')}`;
   };
 
   /* ── Roster subpage */
