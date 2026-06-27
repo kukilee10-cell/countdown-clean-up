@@ -752,7 +752,7 @@
     const cardPlanner = `
       <article class="hero-card planner-card">
         <div class="hero-card-title">📝 Planner</div>
-        <button class="planner-block" data-action="open-notes">
+        <button class="planner-block" data-action="open-notes-from-hero">
           <div class="planner-block-head">
             <span>Notes</span>
             <span class="planner-chev">›</span>
@@ -761,7 +761,7 @@
             notesPrev ? esc(notesPrev) + (notesText.length > 140 ? '…' : '') : '<em>Tap to add notes for this swing</em>'
           }</div>
         </button>
-        <button class="planner-block" data-action="open-dont-forget">
+        <button class="planner-block" data-action="open-df-from-hero">
           <div class="planner-block-head">
             <span>Checklist</span>
             <span class="planner-count">${dfItems.length} item${dfItems.length === 1 ? '' : 's'}</span>
