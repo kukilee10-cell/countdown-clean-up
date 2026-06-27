@@ -303,6 +303,197 @@ main {
 }
 
 /* ════════════════════════════════════════════════════════
+   HERO CAROUSEL — swipeable, scroll-snap, dot indicators
+   ════════════════════════════════════════════════════════ */
+.hero-carousel-wrap { display: flex; flex-direction: column; gap: 14px; }
+.hero-carousel {
+  display: flex;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  gap: 0;
+  margin: 0 -14px;            /* bleed to screen edges */
+  padding: 0 14px;
+  scroll-padding-left: 14px;
+}
+.hero-carousel::-webkit-scrollbar { display: none; }
+.hero-slide {
+  flex: 0 0 100%;
+  scroll-snap-align: center;
+  scroll-snap-stop: always;
+  padding-right: 12px;
+}
+.hero-slide:last-child { padding-right: 0; }
+
+.hero-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 22px;
+  padding: 26px 20px 22px;
+  min-height: 380px;
+  display: flex; flex-direction: column;
+  position: relative;
+  box-shadow:
+    0 0 0 1px var(--border),
+    0 8px 32px var(--accent-glow-08);
+}
+.hero-card::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  border-radius: 22px 22px 0 0;
+  background: var(--accent);
+}
+.hero-card.on-rr::before { background: var(--ok); }
+
+.hero-card-title {
+  font-family: var(--mono); font-size: 11px; letter-spacing: 0.2em;
+  text-transform: uppercase; color: var(--muted);
+  margin-bottom: 18px;
+}
+
+/* Card 1 — countdown: scaled-up hero */
+.hero-card.hero { text-align: center; padding-top: 30px; }
+.hero-card.hero .hero-number {
+  font-size: clamp(96px, 26vw, 140px);
+  margin-top: 4px;
+}
+.hero-status-chip {
+  margin-top: auto; padding-top: 18px;
+  font-family: var(--mono); font-size: 12px;
+  color: var(--muted); letter-spacing: 0.04em;
+}
+.hero-status-chip.on-site { color: var(--accent); }
+.hero-status-chip.on-rr   { color: var(--ok); }
+
+/* Card 2 — travel */
+.travel-card .travel-row { padding: 8px 0; }
+.travel-card .travel-label {
+  font-family: var(--mono); font-size: 10px; letter-spacing: 0.16em;
+  text-transform: uppercase; color: var(--muted); margin-bottom: 6px;
+}
+.travel-card .travel-date {
+  font-family: var(--mono); font-size: 22px; font-weight: 500;
+  color: var(--text); letter-spacing: -0.01em;
+}
+.travel-card .travel-date.accent { color: var(--accent); }
+.travel-card .travel-date.ok     { color: var(--ok); }
+.travel-card .travel-meta {
+  font-size: 13px; color: var(--muted); margin-top: 4px;
+}
+.travel-card .travel-divider {
+  height: 1px; background: var(--border);
+  margin: 14px 0;
+}
+.travel-card .travel-foot {
+  margin-top: auto; padding-top: 18px;
+  font-family: var(--mono); font-size: 11px;
+  letter-spacing: 0.08em; color: var(--muted);
+}
+
+/* Card 3 — planner */
+.planner-card { gap: 12px; }
+.planner-block {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 14px 16px;
+  text-align: left;
+  cursor: pointer;
+  display: flex; flex-direction: column; gap: 8px;
+  color: var(--text); font: inherit;
+  transition: background 0.12s, border-color 0.12s;
+}
+.planner-block:active { background: var(--border); }
+.planner-block-head {
+  display: flex; align-items: center; gap: 10px;
+  font-family: var(--mono); font-size: 11px; letter-spacing: 0.14em;
+  text-transform: uppercase; color: var(--muted);
+}
+.planner-block-head > span:first-child { color: var(--text); }
+.planner-count {
+  background: var(--accent-glow-12); color: var(--accent);
+  padding: 2px 8px; border-radius: 99px;
+  font-size: 10px; letter-spacing: 0.08em;
+}
+.planner-chev { margin-left: auto; color: var(--muted); font-size: 18px; }
+.planner-block-body {
+  font-size: 13px; color: var(--text); line-height: 1.5;
+  word-break: break-word;
+}
+.planner-block-body em { color: var(--muted); font-style: normal; }
+.planner-block-body .muted { color: var(--muted); font-size: 12px; }
+
+/* Card 4 — alarm */
+.alarm-card .alarm-time-display {
+  text-align: center;
+  padding: 18px 0 14px;
+}
+.alarm-card .alarm-big {
+  display: block;
+  font-family: var(--mono); font-weight: 500;
+  font-size: clamp(48px, 14vw, 64px);
+  letter-spacing: -0.02em; line-height: 1;
+  color: var(--muted);
+}
+.alarm-card .alarm-time-display.on .alarm-big { color: var(--accent); }
+.alarm-card .alarm-state {
+  display: inline-block; margin-top: 10px;
+  font-family: var(--mono); font-size: 10px; letter-spacing: 0.2em;
+  padding: 4px 10px; border-radius: 99px;
+  background: var(--border); color: var(--muted);
+}
+.alarm-card .alarm-time-display.on .alarm-state {
+  background: var(--accent-glow-12); color: var(--accent);
+}
+.alarm-row-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+  margin: 12px 0 16px;
+}
+.alarm-mini {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 12px; padding: 10px 12px;
+}
+.alarm-mini-label {
+  font-family: var(--mono); font-size: 9px; letter-spacing: 0.16em;
+  text-transform: uppercase; color: var(--muted); margin-bottom: 4px;
+}
+.alarm-mini-val { font-size: 14px; font-weight: 600; color: var(--text); }
+.alarm-actions {
+  margin-top: auto; display: flex; flex-direction: column; gap: 8px;
+}
+.alarm-act-btn {
+  width: 100%; padding: 13px;
+  background: var(--surface); border: 1px solid var(--border);
+  color: var(--text); border-radius: 12px;
+  font-size: 14px; font-weight: 600; cursor: pointer;
+  transition: background 0.12s;
+}
+.alarm-act-btn:active { background: var(--border); }
+.alarm-act-btn.primary {
+  background: var(--accent); color: #0d0f12; border-color: var(--accent);
+}
+.alarm-act-btn.primary:active { background: var(--accent-dk); }
+
+/* Dots */
+.hero-dots {
+  display: flex; justify-content: center; gap: 8px;
+  padding: 2px 0;
+}
+.hero-dot {
+  width: 7px; height: 7px; padding: 0;
+  border-radius: 50%; border: none;
+  background: var(--border);
+  cursor: pointer;
+  transition: background 0.15s, width 0.15s;
+}
+.hero-dot.active {
+  background: var(--accent);
+  width: 22px; border-radius: 99px;
+}
+
+/* ════════════════════════════════════════════════════════
    CALENDAR — fully rewritten using semantic classes
    ════════════════════════════════════════════════════════ */
 .cal-card {
