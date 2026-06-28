@@ -42,8 +42,32 @@
   const saveAlarm     = (d) => writeJSON(KEYS.alarm, d);
   const loadSpotify   = () => readJSON(KEYS.spotify, { url: '' });
   const saveSpotify   = (d) => writeJSON(KEYS.spotify, d);
-  const loadReminders = () => readJSON(KEYS.reminders, {});
+  const REM_COLORS = {
+    red:    { bg: '#ef4444', fg: '#ffffff', label: 'Red' },
+    orange: { bg: '#f97316', fg: '#ffffff', label: 'Orange' },
+    yellow: { bg: '#eab308', fg: '#0d0f12', label: 'Yellow' },
+    green:  { bg: '#10b981', fg: '#ffffff', label: 'Green' },
+    blue:   { bg: '#3b82f6', fg: '#ffffff', label: 'Blue' },
+    purple: { bg: '#8b5cf6', fg: '#ffffff', label: 'Purple' },
+    pink:   { bg: '#ec4899', fg: '#ffffff', label: 'Pink' },
+  };
+  const REM_COLOR_KEYS = Object.keys(REM_COLORS);
+  const normalizeReminder = (r) =>
+    typeof r === 'string'
+      ? { text: r, color: null }
+      : { text: (r && r.text) || '', color: (r && r.color && REM_COLORS[r.color]) ? r.color : null };
+  const loadReminders = () => {
+    const raw = readJSON(KEYS.reminders, {});
+    const out = {};
+    for (const k in raw) {
+      const list = (raw[k] || []).map(normalizeReminder);
+      if (list.length) out[k] = list;
+    }
+    return out;
+  };
   const saveReminders = (d) => writeJSON(KEYS.reminders, d);
+  // Selected color for the "add new reminder" picker (per open of subpanel)
+  let remPickerColor = null;
 
   /* ──────────────────────────────────────────────────────────
      DATE HELPERS
@@ -505,7 +529,13 @@
       const isToday = dObj.getTime() === now.getTime();
       const isWeekend = WEEKEND.includes(dObj.getDay());
       const status = dayStatus(state, dObj);
-      const remCount = reminders[dateStr]?.length || 0;
+      const dayRems = reminders[dateStr] || [];
+      const remCount = dayRems.length;
+      // Reminder colour wins the tile — use the most recently added coloured reminder.
+      let tileColorKey = null;
+      for (let k = dayRems.length - 1; k >= 0; k--) {
+        if (dayRems[k].color) { tileColorKey = dayRems[k].color; break; }
+      }
 
       const cls = [
         'cal-day',
@@ -513,7 +543,11 @@
         isToday ? 'today' : '',
         status.isFlyHome ? 'fly-home' : '',
         isWeekend ? 'weekend' : '',
+        tileColorKey ? 'has-rem-color' : '',
       ].filter(Boolean).join(' ');
+      const tileStyle = tileColorKey
+        ? ` style="--rem-bg:${REM_COLORS[tileColorKey].bg};--rem-fg:${REM_COLORS[tileColorKey].fg};"`
+        : '';
 
       const remDot = remCount > 0
         ? `<span class="cal-rem${remCount > 1 ? ' multi' : ''}" aria-hidden="true"></span>`
@@ -529,7 +563,7 @@
         remCount ? `${remCount} reminder${remCount > 1 ? 's' : ''}` : '',
       ].filter(Boolean).join(', ');
 
-      html += `<button class="${cls}" data-action="cal-open" data-date="${dateStr}" aria-label="${parts}"><span class="cal-num">${d}</span>${statusBar}${remDot}</button>`;
+      html += `<button class="${cls}"${tileStyle} data-action="cal-open" data-date="${dateStr}" aria-label="${parts}"><span class="cal-num">${d}</span>${statusBar}${remDot}</button>`;
     }
 
     html += '</div>';
