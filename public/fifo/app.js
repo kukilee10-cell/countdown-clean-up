@@ -584,6 +584,7 @@
      ────────────────────────────────────────────────────────── */
   const openRemindersSub = (dateStr) => {
     const list = loadReminders()[dateStr] || [];
+    remPickerColor = null;
     const [y, m, d] = dateStr.split('-');
     const display = new Date(+y, +m - 1, +d).toLocaleDateString('en-AU', {
       weekday: 'long', day: 'numeric', month: 'short', year: 'numeric',
@@ -599,11 +600,20 @@
       h += `<div class="rem-empty">No reminders set for this date.</div>`;
     } else {
       h += `<div class="rem-list">`;
-      list.forEach((text, i) => {
+      list.forEach((rem, i) => {
+        const swatches = REM_COLOR_KEYS.map((k) => {
+          const sel = rem.color === k ? ' selected' : '';
+          return `<button type="button" class="rem-swatch${sel}" data-action="rem-color" data-date="${dateStr}" data-i="${i}" data-color="${k}" aria-label="${REM_COLORS[k].label}" style="background:${REM_COLORS[k].bg};"></button>`;
+        }).join('');
+        const noneSel = rem.color ? '' : ' selected';
+        const noneBtn = `<button type="button" class="rem-swatch rem-swatch-none${noneSel}" data-action="rem-color" data-date="${dateStr}" data-i="${i}" data-color="" aria-label="No colour">✕</button>`;
         h += `
           <div class="rem-item">
-            <span class="rem-text">${esc(text)}</span>
-            <button class="rem-del" data-action="rem-del" data-date="${dateStr}" data-i="${i}" aria-label="Delete reminder">🗑️</button>
+            <div class="rem-item-row">
+              <span class="rem-text">${esc(rem.text)}</span>
+              <button class="rem-del" data-action="rem-del" data-date="${dateStr}" data-i="${i}" aria-label="Delete reminder">🗑️</button>
+            </div>
+            <div class="rem-swatches" role="group" aria-label="Tile colour">${swatches}${noneBtn}</div>
           </div>`;
       });
       h += `</div>`;
@@ -619,6 +629,10 @@
                  data-action="rem-input" data-date="${dateStr}">
           <button class="rem-add-btn" data-action="rem-add" data-date="${dateStr}">Add</button>
         </div>
+        <div class="rem-swatches rem-swatches-new" role="group" aria-label="Tile colour for new reminder">
+          ${REM_COLOR_KEYS.map((k) => `<button type="button" class="rem-swatch" data-action="rem-pick-color" data-color="${k}" aria-label="${REM_COLORS[k].label}" style="background:${REM_COLORS[k].bg};"></button>`).join('')}
+          <button type="button" class="rem-swatch rem-swatch-none selected" data-action="rem-pick-color" data-color="" aria-label="No colour">✕</button>
+        </div>
       </div>`;
 
     $('settings-panel').innerHTML = h;
@@ -632,7 +646,7 @@
     const text = (input?.value || '').trim();
     if (!text) return;
     const rems = loadReminders();
-    (rems[dateStr] ||= []).push(text);
+    (rems[dateStr] ||= []).push({ text, color: remPickerColor || null });
     saveReminders(rems);
     openRemindersSub(dateStr);
     render();
@@ -646,6 +660,26 @@
     saveReminders(rems);
     openRemindersSub(dateStr);
     render();
+  };
+
+  const setReminderColor = (dateStr, index, colorKey) => {
+    const rems = loadReminders();
+    if (!rems[dateStr] || !rems[dateStr][index]) return;
+    rems[dateStr][index].color = colorKey && REM_COLORS[colorKey] ? colorKey : null;
+    saveReminders(rems);
+    openRemindersSub(dateStr);
+    render();
+  };
+
+  const pickRemColor = (colorKey) => {
+    remPickerColor = colorKey && REM_COLORS[colorKey] ? colorKey : null;
+    // Visually mark the selected swatch without re-rendering the whole panel.
+    const row = document.querySelector('.rem-swatches-new');
+    if (!row) return;
+    row.querySelectorAll('.rem-swatch').forEach((el) => {
+      const v = el.dataset.color || '';
+      el.classList.toggle('selected', v === (remPickerColor || ''));
+    });
   };
 
   /* ──────────────────────────────────────────────────────────
