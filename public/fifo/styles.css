@@ -622,10 +622,11 @@ main {
 .rem-empty { padding: 10px 22px; color: var(--muted); font-size: 14px; }
 .rem-list  { padding: 0 22px; display: flex; flex-direction: column; gap: 10px; margin-bottom: 22px; }
 .rem-item {
-  display: flex; align-items: center; justify-content: space-between;
+  display: flex; flex-direction: column; gap: 10px;
   background: var(--card); border: 1px solid var(--border);
   border-radius: 12px; padding: 12px 14px;
 }
+.rem-item-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .rem-text { font-size: 15px; color: var(--text); word-break: break-word; flex: 1; }
 .rem-del {
   background: none; border: none; color: var(--danger);
@@ -645,6 +646,52 @@ main {
   font-weight: 700; font-size: 15px; cursor: pointer;
 }
 .rem-add-btn:active { background: var(--accent-dk); }
+
+/* ── REMINDER COLOUR SWATCHES ───────────────────────────── */
+.rem-swatches {
+  display: flex; flex-wrap: wrap; gap: 8px;
+  align-items: center;
+}
+.rem-swatches-new { margin-top: 10px; }
+.rem-swatch {
+  width: 24px; height: 24px; border-radius: 50%;
+  border: 2px solid transparent;
+  padding: 0; cursor: pointer;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.08);
+  transition: transform 0.1s, border-color 0.15s;
+  -webkit-tap-highlight-color: transparent;
+}
+.rem-swatch:active { transform: scale(0.9); }
+.rem-swatch.selected {
+  border-color: var(--text);
+  box-shadow: 0 0 0 2px var(--bg) inset;
+}
+.rem-swatch-none {
+  background: transparent;
+  border: 1.5px dashed var(--border);
+  color: var(--muted);
+  font-size: 11px; line-height: 1;
+  display: inline-flex; align-items: center; justify-content: center;
+}
+.rem-swatch-none.selected { border-color: var(--text); color: var(--text); }
+
+/* ── REMINDER-COLOURED CALENDAR TILE (wins over status) ── */
+.cal-day.has-rem-color,
+.cal-day.has-rem-color.on-site,
+.cal-day.has-rem-color.rr,
+.cal-day.has-rem-color.weekend {
+  background: var(--rem-bg) !important;
+  color: var(--rem-fg) !important;
+  border-color: transparent !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+}
+.cal-day.has-rem-color.today {
+  background: var(--rem-bg) !important;
+  color: var(--rem-fg) !important;
+  box-shadow: 0 0 0 2px var(--text), 0 4px 14px rgba(0,0,0,0.35);
+}
+.cal-day.has-rem-color .cal-bar,
+.cal-day.has-rem-color .cal-rem { display: none; }
 
 /* ════════════════════════════════════════════════════════
    WAKE-UP ALERT
