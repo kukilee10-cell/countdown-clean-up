@@ -1241,6 +1241,8 @@
     // Reminders
     'rem-add': (t) => addReminder(t.dataset.date),
     'rem-del': (t) => deleteReminder(t.dataset.date, parseInt(t.dataset.i, 10)),
+    'rem-color': (t) => setReminderColor(t.dataset.date, parseInt(t.dataset.i, 10), t.dataset.color),
+    'rem-pick-color': (t) => pickRemColor(t.dataset.color),
 
     // Alarm overlay buttons
     'stop-alarm':   stopAlarm,
