@@ -42,8 +42,32 @@
   const saveAlarm     = (d) => writeJSON(KEYS.alarm, d);
   const loadSpotify   = () => readJSON(KEYS.spotify, { url: '' });
   const saveSpotify   = (d) => writeJSON(KEYS.spotify, d);
-  const loadReminders = () => readJSON(KEYS.reminders, {});
+  const REM_COLORS = {
+    red:    { bg: '#ef4444', fg: '#ffffff', label: 'Red' },
+    orange: { bg: '#f97316', fg: '#ffffff', label: 'Orange' },
+    yellow: { bg: '#eab308', fg: '#0d0f12', label: 'Yellow' },
+    green:  { bg: '#10b981', fg: '#ffffff', label: 'Green' },
+    blue:   { bg: '#3b82f6', fg: '#ffffff', label: 'Blue' },
+    purple: { bg: '#8b5cf6', fg: '#ffffff', label: 'Purple' },
+    pink:   { bg: '#ec4899', fg: '#ffffff', label: 'Pink' },
+  };
+  const REM_COLOR_KEYS = Object.keys(REM_COLORS);
+  const normalizeReminder = (r) =>
+    typeof r === 'string'
+      ? { text: r, color: null }
+      : { text: (r && r.text) || '', color: (r && r.color && REM_COLORS[r.color]) ? r.color : null };
+  const loadReminders = () => {
+    const raw = readJSON(KEYS.reminders, {});
+    const out = {};
+    for (const k in raw) {
+      const list = (raw[k] || []).map(normalizeReminder);
+      if (list.length) out[k] = list;
+    }
+    return out;
+  };
   const saveReminders = (d) => writeJSON(KEYS.reminders, d);
+  // Selected color for the "add new reminder" picker (per open of subpanel)
+  let remPickerColor = null;
 
   /* ──────────────────────────────────────────────────────────
      DATE HELPERS
@@ -505,7 +529,13 @@
       const isToday = dObj.getTime() === now.getTime();
       const isWeekend = WEEKEND.includes(dObj.getDay());
       const status = dayStatus(state, dObj);
-      const remCount = reminders[dateStr]?.length || 0;
+      const dayRems = reminders[dateStr] || [];
+      const remCount = dayRems.length;
+      // Reminder colour wins the tile — use the most recently added coloured reminder.
+      let tileColorKey = null;
+      for (let k = dayRems.length - 1; k >= 0; k--) {
+        if (dayRems[k].color) { tileColorKey = dayRems[k].color; break; }
+      }
 
       const cls = [
         'cal-day',
@@ -513,7 +543,11 @@
         isToday ? 'today' : '',
         status.isFlyHome ? 'fly-home' : '',
         isWeekend ? 'weekend' : '',
+        tileColorKey ? 'has-rem-color' : '',
       ].filter(Boolean).join(' ');
+      const tileStyle = tileColorKey
+        ? ` style="--rem-bg:${REM_COLORS[tileColorKey].bg};--rem-fg:${REM_COLORS[tileColorKey].fg};"`
+        : '';
 
       const remDot = remCount > 0
         ? `<span class="cal-rem${remCount > 1 ? ' multi' : ''}" aria-hidden="true"></span>`
@@ -529,7 +563,7 @@
         remCount ? `${remCount} reminder${remCount > 1 ? 's' : ''}` : '',
       ].filter(Boolean).join(', ');
 
-      html += `<button class="${cls}" data-action="cal-open" data-date="${dateStr}" aria-label="${parts}"><span class="cal-num">${d}</span>${statusBar}${remDot}</button>`;
+      html += `<button class="${cls}"${tileStyle} data-action="cal-open" data-date="${dateStr}" aria-label="${parts}"><span class="cal-num">${d}</span>${statusBar}${remDot}</button>`;
     }
 
     html += '</div>';
@@ -550,6 +584,7 @@
      ────────────────────────────────────────────────────────── */
   const openRemindersSub = (dateStr) => {
     const list = loadReminders()[dateStr] || [];
+    remPickerColor = null;
     const [y, m, d] = dateStr.split('-');
     const display = new Date(+y, +m - 1, +d).toLocaleDateString('en-AU', {
       weekday: 'long', day: 'numeric', month: 'short', year: 'numeric',
@@ -565,11 +600,20 @@
       h += `<div class="rem-empty">No reminders set for this date.</div>`;
     } else {
       h += `<div class="rem-list">`;
-      list.forEach((text, i) => {
+      list.forEach((rem, i) => {
+        const swatches = REM_COLOR_KEYS.map((k) => {
+          const sel = rem.color === k ? ' selected' : '';
+          return `<button type="button" class="rem-swatch${sel}" data-action="rem-color" data-date="${dateStr}" data-i="${i}" data-color="${k}" aria-label="${REM_COLORS[k].label}" style="background:${REM_COLORS[k].bg};"></button>`;
+        }).join('');
+        const noneSel = rem.color ? '' : ' selected';
+        const noneBtn = `<button type="button" class="rem-swatch rem-swatch-none${noneSel}" data-action="rem-color" data-date="${dateStr}" data-i="${i}" data-color="" aria-label="No colour">✕</button>`;
         h += `
           <div class="rem-item">
-            <span class="rem-text">${esc(text)}</span>
-            <button class="rem-del" data-action="rem-del" data-date="${dateStr}" data-i="${i}" aria-label="Delete reminder">🗑️</button>
+            <div class="rem-item-row">
+              <span class="rem-text">${esc(rem.text)}</span>
+              <button class="rem-del" data-action="rem-del" data-date="${dateStr}" data-i="${i}" aria-label="Delete reminder">🗑️</button>
+            </div>
+            <div class="rem-swatches" role="group" aria-label="Tile colour">${swatches}${noneBtn}</div>
           </div>`;
       });
       h += `</div>`;
@@ -585,6 +629,10 @@
                  data-action="rem-input" data-date="${dateStr}">
           <button class="rem-add-btn" data-action="rem-add" data-date="${dateStr}">Add</button>
         </div>
+        <div class="rem-swatches rem-swatches-new" role="group" aria-label="Tile colour for new reminder">
+          ${REM_COLOR_KEYS.map((k) => `<button type="button" class="rem-swatch" data-action="rem-pick-color" data-color="${k}" aria-label="${REM_COLORS[k].label}" style="background:${REM_COLORS[k].bg};"></button>`).join('')}
+          <button type="button" class="rem-swatch rem-swatch-none selected" data-action="rem-pick-color" data-color="" aria-label="No colour">✕</button>
+        </div>
       </div>`;
 
     $('settings-panel').innerHTML = h;
@@ -598,7 +646,7 @@
     const text = (input?.value || '').trim();
     if (!text) return;
     const rems = loadReminders();
-    (rems[dateStr] ||= []).push(text);
+    (rems[dateStr] ||= []).push({ text, color: remPickerColor || null });
     saveReminders(rems);
     openRemindersSub(dateStr);
     render();
@@ -612,6 +660,26 @@
     saveReminders(rems);
     openRemindersSub(dateStr);
     render();
+  };
+
+  const setReminderColor = (dateStr, index, colorKey) => {
+    const rems = loadReminders();
+    if (!rems[dateStr] || !rems[dateStr][index]) return;
+    rems[dateStr][index].color = colorKey && REM_COLORS[colorKey] ? colorKey : null;
+    saveReminders(rems);
+    openRemindersSub(dateStr);
+    render();
+  };
+
+  const pickRemColor = (colorKey) => {
+    remPickerColor = colorKey && REM_COLORS[colorKey] ? colorKey : null;
+    // Visually mark the selected swatch without re-rendering the whole panel.
+    const row = document.querySelector('.rem-swatches-new');
+    if (!row) return;
+    row.querySelectorAll('.rem-swatch').forEach((el) => {
+      const v = el.dataset.color || '';
+      el.classList.toggle('selected', v === (remPickerColor || ''));
+    });
   };
 
   /* ──────────────────────────────────────────────────────────
@@ -1173,6 +1241,8 @@
     // Reminders
     'rem-add': (t) => addReminder(t.dataset.date),
     'rem-del': (t) => deleteReminder(t.dataset.date, parseInt(t.dataset.i, 10)),
+    'rem-color': (t) => setReminderColor(t.dataset.date, parseInt(t.dataset.i, 10), t.dataset.color),
+    'rem-pick-color': (t) => pickRemColor(t.dataset.color),
 
     // Alarm overlay buttons
     'stop-alarm':   stopAlarm,
