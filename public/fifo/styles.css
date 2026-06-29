@@ -167,6 +167,16 @@ header {
 }
 .settings-btn:active { background: var(--border); }
 
+.music-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 11px 12px;
+  color: #1DB954;
+  border-color: rgba(29, 185, 84, 0.35);
+  background: linear-gradient(180deg, rgba(29,185,84,0.10), rgba(29,185,84,0.04));
+}
+.music-btn span { color: var(--text); font-size: 13px; }
+.music-btn:active { background: rgba(29,185,84,0.18); }
+
 /* ── MAIN ───────────────────────────────────────────────── */
 main {
   flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch;
