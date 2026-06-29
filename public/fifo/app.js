@@ -344,6 +344,8 @@
     if (alarm.snoozeTimer) { clearTimeout(alarm.snoozeTimer); alarm.snoozeTimer = null; }
     if (!$('bedtime-overlay')?.classList.contains('active')) releaseWakeLock();
     render();
+    // Same-gesture deep-link to Spotify → wakes the user with their music.
+    try { doOpenSpotify(null); } catch (_) {}
   };
 
   const snoozeAlarm = () => {
