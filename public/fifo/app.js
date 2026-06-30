@@ -768,25 +768,40 @@
     const pbClass = isOnSwing ? '' : 'done';
     const now = today();
 
-    const heroSub = isOnSwing
-      ? `Fly home <strong>${daysLeft === 0 ? 'today! ✈️' : formatDate(curFlyHome)}</strong>`
-      : `Back on site <strong>${formatDate(nextSwing || curFlyHome)}</strong>`;
+    const formatDateLong = (d) => {
+      const wk = d.toLocaleDateString('en-AU', { weekday: 'long' });
+      const rest = d.toLocaleDateString('en-AU', { day: 'numeric', month: 'long', year: 'numeric' });
+      return `${wk} &middot; ${rest}`;
+    };
+    const nextDate = isOnSwing ? curFlyHome : (nextSwing || curFlyHome);
+    const nextLabel = isOnSwing
+      ? (daysLeft === 0 ? '✈ Flying home today' : '✈ Fly home')
+      : '⛏ Next swing';
 
     // --- Card 1: Countdown ---
     const cardCountdown = `
-      <article class="hero-card hero ${isOnSwing ? '' : 'on-rr'}">
-        <div class="hero-label">${isOnSwing ? '⛏️ Days Left on Site' : '🏡 Days Left at Home'}</div>
-        <div class="hero-number ${hc}">${heroNum}</div>
-        <div class="hero-unit">${heroNum === 1 ? 'day' : 'days'}</div>
-        <div class="hero-sub">${heroSub}</div>
-        <div class="progress-wrap"><div class="progress-fill ${pbClass}" style="width:${pct}%"></div></div>
-        <div class="progress-label">
-          <span>${isOnSwing ? 'Day 1' : 'Fly-home'}</span>
-          <span>${pct}%</span>
-          <span>${isOnSwing ? 'Day ' + daysOn : 'Back on site'}</span>
+      <article class="hero-card hero premium ${isOnSwing ? '' : 'on-rr'}">
+        <div class="hero-glow" aria-hidden="true"></div>
+        <div class="hero-shine" aria-hidden="true"></div>
+        <div class="hero-badge ${isOnSwing ? 'on-site' : 'on-rr'}">
+          <span class="hero-badge-dot"></span>${isOnSwing ? 'On Site' : 'On R&R'}
         </div>
-        <div class="hero-status-chip ${isOnSwing ? 'on-site' : 'on-rr'}">
-          ${isOnSwing ? '🟠 On Site' : '🟢 On R&R'} · ${formatDate(now)}
+        <div class="hero-label">${isOnSwing ? 'Days left on site' : 'Days left at home'}</div>
+        <div class="hero-number-wrap">
+          <div class="hero-number ${hc}" style="--fill:${pct}%">${heroNum}</div>
+          <div class="hero-unit">${heroNum === 1 ? 'day' : 'days'} remaining</div>
+        </div>
+        <div class="hero-next">
+          <div class="hero-next-label">${nextLabel}</div>
+          <div class="hero-next-date">${formatDateLong(nextDate)}</div>
+        </div>
+        <div class="hero-progress">
+          <div class="progress-wrap premium"><div class="progress-fill ${pbClass}" style="width:${pct}%"></div></div>
+          <div class="progress-label">
+            <span>${isOnSwing ? 'Day 1' : 'Home'}</span>
+            <span class="pct">${pct}%</span>
+            <span>${isOnSwing ? 'Day ' + daysOn : 'Site'}</span>
+          </div>
         </div>
       </article>`;
 

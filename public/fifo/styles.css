@@ -376,6 +376,209 @@ main {
 .hero-status-chip.on-site { color: var(--accent); }
 .hero-status-chip.on-rr   { color: var(--ok); }
 
+/* ─────────────────────────────────────────────────────────
+   Premium countdown card (Card 1) — glass, glow, hierarchy
+   ───────────────────────────────────────────────────────── */
+.hero-card.hero.premium {
+  text-align: center;
+  padding: 30px 22px 24px;
+  background:
+    radial-gradient(120% 80% at 50% 0%, rgba(245,166,35,0.07) 0%, transparent 55%),
+    linear-gradient(180deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.01) 40%, rgba(0,0,0,0.10) 100%),
+    var(--card);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 24px;
+  overflow: hidden;
+  isolation: isolate;
+  backdrop-filter: blur(16px) saturate(140%);
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,0.04),
+    inset 0 1px 0 rgba(255,255,255,0.08),
+    inset 0 -1px 0 rgba(0,0,0,0.25),
+    0 18px 50px rgba(0,0,0,0.45),
+    0 0 60px var(--accent-glow-08);
+  animation: heroCardIn 700ms cubic-bezier(.22,.61,.36,1) both;
+}
+.hero-card.hero.premium.on-rr {
+  background:
+    radial-gradient(120% 80% at 50% 0%, rgba(16,185,129,0.09) 0%, transparent 55%),
+    linear-gradient(180deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.01) 40%, rgba(0,0,0,0.10) 100%),
+    var(--card);
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,0.04),
+    inset 0 1px 0 rgba(255,255,255,0.08),
+    inset 0 -1px 0 rgba(0,0,0,0.25),
+    0 18px 50px rgba(0,0,0,0.45),
+    0 0 60px rgba(16,185,129,0.10);
+}
+.hero-card.hero.premium::before { display: none; }
+
+.hero-card.hero.premium .hero-glow {
+  position: absolute; inset: auto 0 -40% 0; height: 70%;
+  background: radial-gradient(60% 60% at 50% 50%, var(--accent-glow-12), transparent 70%);
+  filter: blur(30px); pointer-events: none; z-index: 0;
+}
+.hero-card.hero.premium.on-rr .hero-glow {
+  background: radial-gradient(60% 60% at 50% 50%, rgba(16,185,129,0.18), transparent 70%);
+}
+.hero-card.hero.premium .hero-shine {
+  position: absolute; top: 0; left: 8%; right: 8%; height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.35), transparent);
+  pointer-events: none; z-index: 1;
+}
+.hero-card.hero.premium > * { position: relative; z-index: 2; }
+
+/* Floating status pill */
+.hero-card.hero.premium .hero-badge {
+  position: absolute; top: 16px; right: 16px; z-index: 3;
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 6px 11px; border-radius: 999px;
+  font-family: var(--mono); font-size: 10.5px; font-weight: 600;
+  letter-spacing: 0.08em; text-transform: uppercase;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 4px 14px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.08);
+}
+.hero-card.hero.premium .hero-badge.on-site {
+  color: var(--accent);
+  background: rgba(245,166,35,0.12);
+  border: 1px solid rgba(245,166,35,0.28);
+}
+.hero-card.hero.premium .hero-badge.on-rr {
+  color: var(--ok);
+  background: rgba(16,185,129,0.12);
+  border: 1px solid rgba(16,185,129,0.30);
+}
+.hero-card.hero.premium .hero-badge-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: currentColor;
+  box-shadow: 0 0 8px currentColor;
+  animation: heroDotPulse 2.4s ease-in-out infinite;
+}
+
+/* Hierarchy: label / number / unit */
+.hero-card.hero.premium .hero-label {
+  margin-top: 6px;
+  font-family: var(--mono); font-size: 10.5px;
+  letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--muted); opacity: 0.75;
+}
+.hero-card.hero.premium .hero-number-wrap {
+  margin: 18px 0 6px;
+  position: relative;
+}
+.hero-card.hero.premium .hero-number-wrap::before {
+  content: ''; position: absolute; left: 50%; top: 50%;
+  width: 70%; height: 80%; transform: translate(-50%, -50%);
+  background: radial-gradient(50% 50% at 50% 50%, var(--accent-glow-12), transparent 70%);
+  filter: blur(24px); z-index: -1; pointer-events: none;
+}
+.hero-card.hero.premium.on-rr .hero-number-wrap::before {
+  background: radial-gradient(50% 50% at 50% 50%, rgba(16,185,129,0.18), transparent 70%);
+}
+.hero-card.hero.premium .hero-number {
+  font-size: clamp(120px, 33vw, 176px);
+  font-weight: 600;
+  letter-spacing: -0.045em;
+  line-height: 0.95;
+  margin: 0;
+  background: linear-gradient(180deg, #ffd27a 0%, var(--accent) 60%, var(--accent-dk) 100%);
+  -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: heroNumIn 700ms cubic-bezier(.22,.61,.36,1) 120ms both;
+}
+.hero-card.hero.premium.on-rr .hero-number {
+  background: linear-gradient(180deg, #6ee7b7 0%, var(--ok) 60%, #0d9668 100%);
+  -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.hero-card.hero.premium .hero-number.danger {
+  background: linear-gradient(180deg, #ff8a8a 0%, var(--danger) 60%, #b91c1c 100%);
+  -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.hero-card.hero.premium .hero-unit {
+  margin-top: 10px;
+  font-family: var(--mono); font-size: 11px;
+  letter-spacing: 0.16em; text-transform: uppercase;
+  color: var(--muted); opacity: 0.7;
+}
+
+/* Next swing block */
+.hero-card.hero.premium .hero-next {
+  margin-top: 22px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: rgba(255,255,255,0.025);
+  border: 1px solid rgba(255,255,255,0.05);
+}
+.hero-card.hero.premium .hero-next-label {
+  font-family: var(--mono); font-size: 10.5px;
+  letter-spacing: 0.16em; text-transform: uppercase;
+  color: var(--muted); margin-bottom: 6px;
+}
+.hero-card.hero.premium .hero-next-date {
+  font-size: 15px; font-weight: 600;
+  color: var(--text); letter-spacing: -0.005em;
+}
+
+/* Premium progress bar */
+.hero-card.hero.premium .hero-progress { margin-top: auto; padding-top: 22px; }
+.progress-wrap.premium {
+  background: rgba(255,255,255,0.06);
+  border-radius: 999px;
+  height: 10px;
+  overflow: hidden;
+  box-shadow: inset 0 1px 2px rgba(0,0,0,0.4);
+}
+.progress-wrap.premium .progress-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--accent-dk), var(--accent) 60%, #ffd27a);
+  box-shadow:
+    0 0 10px var(--accent-glow-60),
+    inset 0 1px 0 rgba(255,255,255,0.25);
+  transition: width 1100ms cubic-bezier(.22,.61,.36,1);
+  animation: heroBarIn 1100ms cubic-bezier(.22,.61,.36,1) 200ms both;
+}
+.progress-wrap.premium .progress-fill.done {
+  background: linear-gradient(90deg, #0d9668, var(--ok) 60%, #6ee7b7);
+  box-shadow:
+    0 0 10px rgba(16,185,129,0.6),
+    inset 0 1px 0 rgba(255,255,255,0.25);
+}
+.hero-card.hero.premium .progress-label {
+  margin-top: 10px;
+  font-family: var(--mono); font-size: 10.5px;
+  letter-spacing: 0.08em; color: var(--muted); opacity: 0.75;
+}
+.hero-card.hero.premium .progress-label .pct {
+  color: var(--text); opacity: 0.95; font-weight: 600;
+}
+
+/* Animations */
+@keyframes heroCardIn {
+  0%   { opacity: 0; transform: translateY(8px) scale(0.985); }
+  100% { opacity: 1; transform: translateY(0)   scale(1); }
+}
+@keyframes heroNumIn {
+  0%   { opacity: 0; transform: translateY(6px); letter-spacing: -0.02em; }
+  100% { opacity: 1; transform: translateY(0);   letter-spacing: -0.045em; }
+}
+@keyframes heroBarIn {
+  0%   { transform: scaleX(0); transform-origin: left center; }
+  100% { transform: scaleX(1); transform-origin: left center; }
+}
+@keyframes heroDotPulse {
+  0%, 100% { opacity: 1;   box-shadow: 0 0 8px currentColor; }
+  50%      { opacity: 0.55; box-shadow: 0 0 4px currentColor; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hero-card.hero.premium,
+  .hero-card.hero.premium .hero-number,
+  .progress-wrap.premium .progress-fill,
+  .hero-card.hero.premium .hero-badge-dot { animation: none !important; }
+}
+
 /* Card 2 — travel */
 .travel-card .travel-row { padding: 8px 0; }
 .travel-card .travel-label {
