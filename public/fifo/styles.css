@@ -698,6 +698,16 @@ main {
   border: 1px solid rgba(255,255,255,0.05);
   display: flex; flex-direction: column; gap: 4px;
 }
+.travel-card.premium .travel-timeline.compact {
+  margin-top: 14px;
+  padding: 10px 12px 8px;
+  border-radius: 12px;
+  gap: 2px;
+}
+.travel-card.premium .travel-timeline.compact .tl-row { padding: 4px 2px; }
+.travel-card.premium .travel-timeline.compact .tl-line { height: 10px; }
+.travel-card.premium .travel-timeline.compact .tl-date { font-size: 13px; }
+.travel-card.premium .travel-timeline.compact .tl-meta { font-size: 10.5px; }
 .travel-card.premium .tl-row {
   display: flex; align-items: center; gap: 12px;
   padding: 6px 2px;
@@ -749,6 +759,21 @@ main {
   transition: background 180ms ease, border-color 180ms ease, transform 180ms ease;
   font: inherit;
 }
+.travel-card.premium .flight-details.primary {
+  margin-top: 18px;
+  padding: 20px 20px 18px;
+  border-radius: 18px;
+  background:
+    radial-gradient(120% 90% at 0% 0%, var(--accent-glow-15, rgba(245,166,35,0.10)), transparent 55%),
+    rgba(255,255,255,0.045);
+  border: 1px solid rgba(255,255,255,0.09);
+  box-shadow: 0 8px 30px rgba(0,0,0,0.28), inset 0 1px 0 rgba(255,255,255,0.04);
+}
+.travel-card.premium .flight-details.primary .flight-details-head { margin-bottom: 14px; }
+.travel-card.premium .flight-details.primary .flight-details-title { font-size: 11.5px; }
+.travel-card.premium .flight-details.primary .flight-grid { gap: 14px 18px; }
+.travel-card.premium .flight-details.primary .flight-v { font-size: 15px; }
+.travel-card.premium .flight-details.primary .flight-code { font-size: 26px; }
 .travel-card.premium .flight-details:hover,
 .travel-card.premium .flight-details:focus-visible {
   background: rgba(255,255,255,0.05);
