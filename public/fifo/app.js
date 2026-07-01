@@ -15,6 +15,7 @@
     dontForget: 'fifo_dont_forget_v1',
     notes:      'fifo_notes_v1',
     reminders:  'fifo_reminders_v1',
+    flight:     'fifo_flight_v1',
   };
 
   // ── tiny DOM helpers
