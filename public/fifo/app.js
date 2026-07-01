@@ -852,16 +852,7 @@
         </div>
         <div class="hero-card-title">✈️ Travel</div>
 
-        <div class="travel-hero">
-          <div class="travel-hero-label">${nextLabelT}</div>
-          <div class="travel-hero-num ${nextClassT}">
-            ${nextInT === 0 ? '<span class="today">TODAY</span>' : nextInT}
-            ${nextInT > 0 ? `<span class="travel-hero-unit">day${nextInT === 1 ? '' : 's'}</span>` : ''}
-          </div>
-          <div class="travel-hero-date">${formatDateLong(nextDateT)}</div>
-        </div>
-
-        <div class="travel-timeline">
+        <div class="travel-timeline compact">
           <div class="tl-row">
             <div class="tl-dot accent"></div>
             <div class="tl-content">
@@ -883,15 +874,13 @@
           </div>
         </div>
 
-        <button class="flight-details ${hasFlight ? 'has-data' : ''}" data-action="edit-flight" aria-label="Edit flight details">
+        <button class="flight-details primary ${hasFlight ? 'has-data' : ''}" data-action="edit-flight" aria-label="Edit flight details">
           <div class="flight-details-head">
             <span class="flight-details-title">Flight Details</span>
             <span class="flight-details-chev">${hasFlight ? '✎' : '＋'}</span>
           </div>
           ${flightDetailsBody}
         </button>
-
-        ${shiftType ? `<div class="travel-foot">${shiftType === 'night' ? '🌙 Night shift rotation' : '☀️ Day shift rotation'}</div>` : ''}
       </article>`;
 
     // --- Card 3: Planner ---
