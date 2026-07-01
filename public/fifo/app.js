@@ -15,6 +15,7 @@
     dontForget: 'fifo_dont_forget_v1',
     notes:      'fifo_notes_v1',
     reminders:  'fifo_reminders_v1',
+    flight:     'fifo_flight_v1',
   };
 
   // ── tiny DOM helpers
@@ -810,22 +811,86 @@
     const returnDate  = isOnSwing ? addDays(curFlyHome, daysOff) : (nextSwing || curEnd);
     const flyHomeIn   = isOnSwing ? daysLeft : 0;
     const returnIn    = isOnSwing ? daysLeft + daysOff : offLeft;
+    // Next journey depends on where you are now
+    const nextIsHome  = isOnSwing;
+    const nextDateT   = nextIsHome ? flyHomeDate : returnDate;
+    const nextInT     = nextIsHome ? flyHomeIn   : returnIn;
+    const nextLabelT  = nextIsHome ? 'Fly Home'  : 'Return to Site';
+    const nextClassT  = nextIsHome ? 'accent'    : 'ok';
+    const badgeClassT = nextIsHome ? 'on-site'   : 'on-rr';
+    const badgeTextT  = nextIsHome ? 'Next Flight' : 'Home';
+
+    const flight = readJSON(KEYS.flight, { number: '', time: '', from: '', to: '', terminal: '', airline: '' });
+    const hasFlight = !!(flight.number || flight.time || flight.from || flight.to || flight.terminal || flight.airline);
+
+    const flightDetailsBody = hasFlight ? `
+      <div class="flight-grid">
+        ${flight.airline ? `<div class="flight-cell"><div class="flight-k">Airline</div><div class="flight-v">${esc(flight.airline)}</div></div>` : ''}
+        ${flight.number  ? `<div class="flight-cell"><div class="flight-k">Flight</div><div class="flight-v mono">${esc(flight.number)}</div></div>` : ''}
+        ${flight.time    ? `<div class="flight-cell"><div class="flight-k">Departs</div><div class="flight-v mono">${esc(flight.time)}</div></div>` : ''}
+        ${flight.terminal? `<div class="flight-cell"><div class="flight-k">Terminal</div><div class="flight-v mono">${esc(flight.terminal)}</div></div>` : ''}
+        ${(flight.from || flight.to) ? `
+          <div class="flight-route">
+            <span class="flight-code">${esc(flight.from || '—')}</span>
+            <span class="flight-arrow" aria-hidden="true">→</span>
+            <span class="flight-code">${esc(flight.to || '—')}</span>
+          </div>` : ''}
+      </div>
+      <div class="flight-edit-hint">Tap to edit</div>
+    ` : `
+      <div class="flight-empty">
+        <span class="flight-empty-icon">✈️</span>
+        <span>Tap to add flight details</span>
+      </div>`;
+
     const cardTravel = `
-      <article class="hero-card travel-card">
+      <article class="hero-card travel-card premium">
+        <div class="hero-glow" aria-hidden="true"></div>
+        <div class="hero-shine" aria-hidden="true"></div>
+        <div class="hero-badge ${badgeClassT}">
+          <span class="hero-badge-dot"></span>${badgeTextT}
+        </div>
         <div class="hero-card-title">✈️ Travel</div>
-        <div class="travel-row">
-          <div class="travel-label">Fly Home</div>
-          <div class="travel-date accent">${formatDate(flyHomeDate)}</div>
-          <div class="travel-meta">${isOnSwing
-              ? (flyHomeIn === 0 ? 'Today ✈️' : `in ${flyHomeIn} day${flyHomeIn === 1 ? '' : 's'}`)
-              : 'Currently home'}</div>
+
+        <div class="travel-hero">
+          <div class="travel-hero-label">${nextLabelT}</div>
+          <div class="travel-hero-num ${nextClassT}">
+            ${nextInT === 0 ? '<span class="today">TODAY</span>' : nextInT}
+            ${nextInT > 0 ? `<span class="travel-hero-unit">day${nextInT === 1 ? '' : 's'}</span>` : ''}
+          </div>
+          <div class="travel-hero-date">${formatDateLong(nextDateT)}</div>
         </div>
-        <div class="travel-divider"></div>
-        <div class="travel-row">
-          <div class="travel-label">Return to Site</div>
-          <div class="travel-date ok">${formatDate(returnDate)}</div>
-          <div class="travel-meta">in ${returnIn} day${returnIn === 1 ? '' : 's'}</div>
+
+        <div class="travel-timeline">
+          <div class="tl-row">
+            <div class="tl-dot accent"></div>
+            <div class="tl-content">
+              <div class="tl-label">Fly Home</div>
+              <div class="tl-date">${formatDate(flyHomeDate)}</div>
+            </div>
+            <div class="tl-meta">${isOnSwing
+                ? (flyHomeIn === 0 ? 'Today' : `in ${flyHomeIn}d`)
+                : 'Done'}</div>
+          </div>
+          <div class="tl-line"></div>
+          <div class="tl-row">
+            <div class="tl-dot ok"></div>
+            <div class="tl-content">
+              <div class="tl-label">Return to Site</div>
+              <div class="tl-date">${formatDate(returnDate)}</div>
+            </div>
+            <div class="tl-meta">in ${returnIn}d</div>
+          </div>
         </div>
+
+        <button class="flight-details ${hasFlight ? 'has-data' : ''}" data-action="edit-flight" aria-label="Edit flight details">
+          <div class="flight-details-head">
+            <span class="flight-details-title">Flight Details</span>
+            <span class="flight-details-chev">${hasFlight ? '✎' : '＋'}</span>
+          </div>
+          ${flightDetailsBody}
+        </button>
+
         ${shiftType ? `<div class="travel-foot">${shiftType === 'night' ? '🌙 Night shift rotation' : '☀️ Day shift rotation'}</div>` : ''}
       </article>`;
 
@@ -1229,6 +1294,27 @@
     el.value = Math.max(min, Math.min(max, v + delta));
   };
 
+  /* ── Flight details quick-edit (used by Travel card) */
+  const editFlightDetails = () => {
+    const cur = readJSON(KEYS.flight, { number: '', time: '', from: '', to: '', terminal: '', airline: '' });
+    const ask = (label, val) => {
+      const r = prompt(label, val || '');
+      return r === null ? null : r.trim();
+    };
+    const airline = ask('Airline (e.g. Qantas)', cur.airline);           if (airline === null) return;
+    const number  = ask('Flight number (e.g. QF123)', cur.number);       if (number === null)  return;
+    const time    = ask('Departure time (e.g. 06:30)', cur.time);        if (time === null)    return;
+    const from    = ask('From airport code (e.g. PER)', cur.from);       if (from === null)    return;
+    const to      = ask('To airport code (e.g. SYD)', cur.to);           if (to === null)      return;
+    const terminal= ask('Terminal (e.g. T2)', cur.terminal);             if (terminal === null)return;
+    writeJSON(KEYS.flight, {
+      airline, number, time,
+      from: from.toUpperCase(), to: to.toUpperCase(),
+      terminal,
+    });
+    render();
+  };
+
   const showPanelMsg = (msg) => {
     document.getElementById('_panel_err')?.remove();
     const d = document.createElement('div');
@@ -1279,6 +1365,7 @@
     'open-alarm-from-hero': () => { openPanel(); openSubAlarm(); },
     'open-notes-from-hero': () => { openPanel(); openSubNotes(); },
     'open-df-from-hero':    () => { openPanel(); openSubDontForget(); },
+    'edit-flight':          editFlightDetails,
 
     // Roster
     'save-roster':  saveRosterSub,
