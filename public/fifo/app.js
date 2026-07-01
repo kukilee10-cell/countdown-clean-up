@@ -1344,6 +1344,7 @@
     'open-alarm-from-hero': () => { openPanel(); openSubAlarm(); },
     'open-notes-from-hero': () => { openPanel(); openSubNotes(); },
     'open-df-from-hero':    () => { openPanel(); openSubDontForget(); },
+    'edit-flight':          editFlightDetails,
 
     // Roster
     'save-roster':  saveRosterSub,
