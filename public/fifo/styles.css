@@ -579,29 +579,249 @@ main {
   .hero-card.hero.premium .hero-badge-dot { animation: none !important; }
 }
 
-/* Card 2 — travel */
-.travel-card .travel-row { padding: 8px 0; }
-.travel-card .travel-label {
-  font-family: var(--mono); font-size: 10px; letter-spacing: 0.16em;
-  text-transform: uppercase; color: var(--muted); margin-bottom: 6px;
+/* ─────────────────────────────────────────────────────────
+   Card 2 — Travel (premium, matches hero countdown card)
+   ───────────────────────────────────────────────────────── */
+.hero-card.travel-card.premium {
+  padding: 30px 22px 24px;
+  background:
+    radial-gradient(120% 80% at 50% 0%, rgba(245,166,35,0.06) 0%, transparent 55%),
+    linear-gradient(180deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.01) 40%, rgba(0,0,0,0.10) 100%),
+    var(--card);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 24px;
+  overflow: hidden;
+  isolation: isolate;
+  backdrop-filter: blur(16px) saturate(140%);
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,0.04),
+    inset 0 1px 0 rgba(255,255,255,0.08),
+    inset 0 -1px 0 rgba(0,0,0,0.25),
+    0 18px 50px rgba(0,0,0,0.45),
+    0 0 60px var(--accent-glow-08);
+  animation: heroCardIn 700ms cubic-bezier(.22,.61,.36,1) both;
 }
-.travel-card .travel-date {
-  font-family: var(--mono); font-size: 22px; font-weight: 500;
-  color: var(--text); letter-spacing: -0.01em;
+.travel-card.premium::before { display: none; }
+.travel-card.premium .hero-glow {
+  position: absolute; inset: auto 0 -40% 0; height: 70%;
+  background: radial-gradient(60% 60% at 50% 50%, var(--accent-glow-12), transparent 70%);
+  filter: blur(30px); pointer-events: none; z-index: 0;
 }
-.travel-card .travel-date.accent { color: var(--accent); }
-.travel-card .travel-date.ok     { color: var(--ok); }
-.travel-card .travel-meta {
-  font-size: 13px; color: var(--muted); margin-top: 4px;
+.travel-card.premium .hero-shine {
+  position: absolute; top: 0; left: 8%; right: 8%; height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.35), transparent);
+  pointer-events: none; z-index: 1;
 }
-.travel-card .travel-divider {
-  height: 1px; background: var(--border);
-  margin: 14px 0;
+.travel-card.premium > * { position: relative; z-index: 2; }
+
+/* Floating status pill (reuses .hero-badge styles from Card 1 look) */
+.travel-card.premium .hero-badge {
+  position: absolute; top: 16px; right: 16px; z-index: 3;
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 6px 11px; border-radius: 999px;
+  font-family: var(--mono); font-size: 10.5px; font-weight: 600;
+  letter-spacing: 0.08em; text-transform: uppercase;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 4px 14px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.08);
 }
-.travel-card .travel-foot {
+.travel-card.premium .hero-badge.on-site {
+  color: var(--accent);
+  background: rgba(245,166,35,0.12);
+  border: 1px solid rgba(245,166,35,0.28);
+}
+.travel-card.premium .hero-badge.on-rr {
+  color: var(--ok);
+  background: rgba(16,185,129,0.12);
+  border: 1px solid rgba(16,185,129,0.30);
+}
+.travel-card.premium .hero-badge-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: currentColor;
+  box-shadow: 0 0 8px currentColor;
+  animation: heroDotPulse 2.4s ease-in-out infinite;
+}
+
+/* Hero block: next journey */
+.travel-card.premium .travel-hero {
+  text-align: center;
+  margin: 10px 0 4px;
+  padding: 18px 12px 14px;
+  position: relative;
+}
+.travel-card.premium .travel-hero::before {
+  content: ''; position: absolute; left: 50%; top: 50%;
+  width: 70%; height: 90%; transform: translate(-50%, -50%);
+  background: radial-gradient(50% 50% at 50% 50%, var(--accent-glow-12), transparent 70%);
+  filter: blur(24px); z-index: -1; pointer-events: none;
+}
+.travel-card.premium .travel-hero-label {
+  font-family: var(--mono); font-size: 10.5px;
+  letter-spacing: 0.16em; text-transform: uppercase;
+  color: var(--muted); opacity: 0.75; margin-bottom: 8px;
+}
+.travel-card.premium .travel-hero-num {
+  font-size: clamp(64px, 18vw, 96px);
+  font-weight: 600;
+  letter-spacing: -0.045em; line-height: 0.95;
+  background: linear-gradient(180deg, #ffd27a 0%, var(--accent) 60%, var(--accent-dk) 100%);
+  -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: heroNumIn 700ms cubic-bezier(.22,.61,.36,1) 120ms both;
+  display: inline-flex; align-items: baseline; gap: 10px;
+}
+.travel-card.premium .travel-hero-num.ok {
+  background: linear-gradient(180deg, #6ee7b7 0%, var(--ok) 60%, #0d9668 100%);
+  -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.travel-card.premium .travel-hero-num .travel-hero-unit {
+  font-family: var(--mono); font-size: 13px; font-weight: 500;
+  letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--muted); opacity: 0.7;
+  -webkit-text-fill-color: var(--muted);
+}
+.travel-card.premium .travel-hero-num .today {
+  font-size: 0.55em; letter-spacing: 0.08em;
+}
+.travel-card.premium .travel-hero-date {
+  margin-top: 8px;
+  font-size: 14px; font-weight: 500;
+  color: var(--text); opacity: 0.85; letter-spacing: -0.005em;
+}
+
+/* Timeline: Fly Home → Return to Site */
+.travel-card.premium .travel-timeline {
+  margin-top: 18px;
+  padding: 14px 14px 12px;
+  border-radius: 14px;
+  background: rgba(255,255,255,0.025);
+  border: 1px solid rgba(255,255,255,0.05);
+  display: flex; flex-direction: column; gap: 4px;
+}
+.travel-card.premium .tl-row {
+  display: flex; align-items: center; gap: 12px;
+  padding: 6px 2px;
+}
+.travel-card.premium .tl-dot {
+  width: 10px; height: 10px; border-radius: 50%;
+  flex-shrink: 0;
+}
+.travel-card.premium .tl-dot.accent {
+  background: var(--accent);
+  box-shadow: 0 0 10px var(--accent-glow-60);
+}
+.travel-card.premium .tl-dot.ok {
+  background: var(--ok);
+  box-shadow: 0 0 10px rgba(16,185,129,0.55);
+}
+.travel-card.premium .tl-line {
+  width: 1px; height: 14px;
+  margin-left: 4px;
+  background: linear-gradient(180deg, var(--accent), var(--ok));
+  opacity: 0.35;
+}
+.travel-card.premium .tl-content { flex: 1; min-width: 0; }
+.travel-card.premium .tl-label {
+  font-family: var(--mono); font-size: 9.5px;
+  letter-spacing: 0.16em; text-transform: uppercase;
+  color: var(--muted); opacity: 0.75;
+}
+.travel-card.premium .tl-date {
+  font-family: var(--mono); font-size: 14px; font-weight: 500;
+  color: var(--text); letter-spacing: -0.005em; margin-top: 2px;
+}
+.travel-card.premium .tl-meta {
+  font-family: var(--mono); font-size: 11px;
+  letter-spacing: 0.06em;
+  color: var(--muted); opacity: 0.85;
+}
+
+/* Flight Details section */
+.travel-card.premium .flight-details {
+  display: block; width: 100%; text-align: left;
+  margin-top: 14px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.06);
+  color: var(--text);
+  cursor: pointer;
+  transition: background 180ms ease, border-color 180ms ease, transform 180ms ease;
+  font: inherit;
+}
+.travel-card.premium .flight-details:hover,
+.travel-card.premium .flight-details:focus-visible {
+  background: rgba(255,255,255,0.05);
+  border-color: rgba(255,255,255,0.10);
+  outline: none;
+}
+.travel-card.premium .flight-details:active { transform: scale(0.99); }
+.travel-card.premium .flight-details-head {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 10px;
+}
+.travel-card.premium .flight-details-title {
+  font-family: var(--mono); font-size: 10.5px;
+  letter-spacing: 0.16em; text-transform: uppercase;
+  color: var(--muted); opacity: 0.85;
+}
+.travel-card.premium .flight-details-chev {
+  font-family: var(--mono); font-size: 14px;
+  color: var(--accent); opacity: 0.85;
+}
+.travel-card.premium .flight-empty {
+  display: flex; align-items: center; gap: 8px;
+  padding: 4px 0;
+  color: var(--muted); font-size: 13px;
+}
+.travel-card.premium .flight-empty-icon { font-size: 16px; opacity: 0.8; }
+.travel-card.premium .flight-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 10px 14px;
+}
+.travel-card.premium .flight-cell { min-width: 0; }
+.travel-card.premium .flight-k {
+  font-family: var(--mono); font-size: 9.5px;
+  letter-spacing: 0.16em; text-transform: uppercase;
+  color: var(--muted); opacity: 0.7;
+}
+.travel-card.premium .flight-v {
+  font-size: 14px; font-weight: 600; color: var(--text);
+  margin-top: 2px; letter-spacing: -0.005em;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.travel-card.premium .flight-v.mono { font-family: var(--mono); font-weight: 500; }
+.travel-card.premium .flight-route {
+  grid-column: 1 / -1;
+  display: flex; align-items: center; justify-content: center; gap: 14px;
+  margin-top: 4px; padding: 10px 8px;
+  border-radius: 10px;
+  background: rgba(0,0,0,0.18);
+  border: 1px solid rgba(255,255,255,0.04);
+}
+.travel-card.premium .flight-code {
+  font-family: var(--mono); font-size: 22px; font-weight: 600;
+  color: var(--text); letter-spacing: 0.06em;
+}
+.travel-card.premium .flight-arrow {
+  font-size: 18px; color: var(--accent); opacity: 0.85;
+}
+.travel-card.premium .flight-edit-hint {
+  margin-top: 10px;
+  font-family: var(--mono); font-size: 9.5px;
+  letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--muted); opacity: 0.55; text-align: right;
+}
+
+.travel-card.premium .travel-foot {
   margin-top: auto; padding-top: 18px;
   font-family: var(--mono); font-size: 11px;
-  letter-spacing: 0.08em; color: var(--muted);
+  letter-spacing: 0.08em; color: var(--muted); text-align: center;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .travel-card.premium,
+  .travel-card.premium .travel-hero-num,
+  .travel-card.premium .hero-badge-dot { animation: none !important; }
 }
 
 /* Card 3 — planner */
