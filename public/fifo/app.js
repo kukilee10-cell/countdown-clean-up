@@ -1294,6 +1294,27 @@
     el.value = Math.max(min, Math.min(max, v + delta));
   };
 
+  /* ── Flight details quick-edit (used by Travel card) */
+  const editFlightDetails = () => {
+    const cur = readJSON(KEYS.flight, { number: '', time: '', from: '', to: '', terminal: '', airline: '' });
+    const ask = (label, val) => {
+      const r = prompt(label, val || '');
+      return r === null ? null : r.trim();
+    };
+    const airline = ask('Airline (e.g. Qantas)', cur.airline);           if (airline === null) return;
+    const number  = ask('Flight number (e.g. QF123)', cur.number);       if (number === null)  return;
+    const time    = ask('Departure time (e.g. 06:30)', cur.time);        if (time === null)    return;
+    const from    = ask('From airport code (e.g. PER)', cur.from);       if (from === null)    return;
+    const to      = ask('To airport code (e.g. SYD)', cur.to);           if (to === null)      return;
+    const terminal= ask('Terminal (e.g. T2)', cur.terminal);             if (terminal === null)return;
+    writeJSON(KEYS.flight, {
+      airline, number, time,
+      from: from.toUpperCase(), to: to.toUpperCase(),
+      terminal,
+    });
+    renderApp();
+  };
+
   const showPanelMsg = (msg) => {
     document.getElementById('_panel_err')?.remove();
     const d = document.createElement('div');
