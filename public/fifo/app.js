@@ -1312,7 +1312,7 @@
       from: from.toUpperCase(), to: to.toUpperCase(),
       terminal,
     });
-    renderApp();
+    render();
   };
 
   const showPanelMsg = (msg) => {
