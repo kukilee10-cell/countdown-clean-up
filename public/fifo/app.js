@@ -962,7 +962,6 @@
 
     renderAlarmStatus();
     setupHeroCarousel();
-    setupNotesCarousel();
   };
 
   /* ──────────────────────────────────────────────────────────
