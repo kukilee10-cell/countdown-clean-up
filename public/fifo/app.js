@@ -970,6 +970,261 @@
     car.scrollTo({ left: car.clientWidth * idx, behavior: 'smooth' });
   };
 
+  /* ──────────────────────────────────────────────────────────
+     NOTES CARD (below calendar) — swipe: Notes / Checklist
+     ────────────────────────────────────────────────────────── */
+  const buildNotesCard = () => {
+    const notesText = localStorage.getItem(KEYS.notes) || '';
+    const dfText    = localStorage.getItem(KEYS.dontForget) || '';
+    const voice     = readJSON(KEYS.voice, []);
+    const notesPrev = notesText.trim().slice(0, 140);
+    const dfItems   = dfText.split('\n').map(s => s.trim()).filter(Boolean);
+    const voiceForNotes    = voice.filter(v => v.kind === 'notes').length;
+    const voiceForChecklist= voice.filter(v => v.kind === 'checklist').length;
+
+    const page = (title, kind, preview, count) => `
+      <div class="notes-slide" data-idx="${kind === 'notes' ? 0 : 1}">
+        <article class="hero-card notes-card premium">
+          <div class="hero-glow" aria-hidden="true"></div>
+          <div class="hero-shine" aria-hidden="true"></div>
+          <div class="hero-badge on-site"><span class="hero-badge-dot"></span>${title}</div>
+          <div class="hero-card-title">${title}</div>
+          <div class="notes-preview">${preview}</div>
+          <div class="notes-actions">
+            <button class="notes-btn write" data-action="notes-write" data-kind="${kind}">
+              <span class="nb-icon">✎</span><span>Write</span>
+            </button>
+            <button class="notes-btn mic" data-action="notes-mic" data-kind="${kind}">
+              <span class="nb-icon">🎙</span><span>Mic</span>
+            </button>
+          </div>
+          ${count ? `<div class="notes-voice-count">${count} voice note${count === 1 ? '' : 's'}</div>` : ''}
+        </article>
+      </div>`;
+
+    const notesPage = page(
+      'Notes', 'notes',
+      notesPrev ? esc(notesPrev) + (notesText.length > 140 ? '…' : '') : '<em>Tap Write or Mic to capture a note</em>',
+      voiceForNotes,
+    );
+    const listPage = page(
+      'Checklist', 'checklist',
+      dfItems.length
+        ? dfItems.slice(0, 4).map(s => `• ${esc(s.replace(/^[•\-\*]\s*/, ''))}`).join('<br>')
+          + (dfItems.length > 4 ? `<br><span class="muted">+${dfItems.length - 4} more</span>` : '')
+        : '<em>Tap Write or Mic to add checklist items</em>',
+      voiceForChecklist,
+    );
+
+    return `
+      <section class="notes-carousel-wrap" aria-label="Notes">
+        <div class="notes-carousel hero-carousel" id="notes-carousel" role="region" aria-roledescription="carousel">
+          ${notesPage}${listPage}
+        </div>
+        <div class="hero-dots" id="notes-dots" role="tablist">
+          <button class="hero-dot active" data-action="notes-dot" data-idx="0" aria-label="Notes"></button>
+          <button class="hero-dot" data-action="notes-dot" data-idx="1" aria-label="Checklist"></button>
+        </div>
+      </section>`;
+  };
+
+  const setupNotesCarousel = () => {
+    const car = $('notes-carousel');
+    const dots = $('notes-dots');
+    if (!car || !dots) return;
+    car.scrollLeft = 0;
+    let raf = null;
+    car.addEventListener('scroll', () => {
+      if (raf) cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(() => {
+        const w = car.clientWidth || 1;
+        const idx = Math.round(car.scrollLeft / w);
+        dots.querySelectorAll('.hero-dot').forEach((d, i) => d.classList.toggle('active', i === idx));
+      });
+    }, { passive: true });
+  };
+  const goNotesSlide = (idx) => {
+    const car = $('notes-carousel');
+    if (!car) return;
+    car.scrollTo({ left: car.clientWidth * idx, behavior: 'smooth' });
+  };
+
+  /* ── Auto-save handlers for Travel & Roster inline forms */
+  const saveFlightField = (key, value) => {
+    const cur = readJSON(KEYS.flight, {});
+    if (key === 'from' || key === 'to') value = (value || '').toUpperCase();
+    cur[key] = value;
+    writeJSON(KEYS.flight, cur);
+    const s = $('flight-save-status');
+    if (s) { s.textContent = '✓ Saved'; s.classList.add('ok'); clearTimeout(saveFlightField._t);
+      saveFlightField._t = setTimeout(() => { s.textContent = 'Auto-saves'; s.classList.remove('ok'); }, 1400); }
+  };
+  const saveRosterField = (key, value) => {
+    const cur = loadRoster() || {};
+    if (key === 'daysOn' || key === 'daysOff') value = Math.max(1, parseInt(value, 10) || 1);
+    cur[key] = value;
+    saveRoster(cur);
+    const s = $('roster-save-status');
+    if (s) { s.textContent = '✓ Saved — updating…'; s.classList.add('ok'); }
+    clearTimeout(saveRosterField._t);
+    saveRosterField._t = setTimeout(() => render(), 400);
+  };
+
+  /* ──────────────────────────────────────────────────────────
+     NOTES EDITOR (full-screen) + MIC (speech-to-text or recorder)
+     ────────────────────────────────────────────────────────── */
+  const NOTE_META = {
+    notes:     { key: KEYS.notes,      title: 'Notes' },
+    checklist: { key: KEYS.dontForget, title: 'Checklist' },
+  };
+
+  let editorState = null;
+  const openNoteEditor = (kind) => {
+    const meta = NOTE_META[kind]; if (!meta) return;
+    const val = localStorage.getItem(meta.key) || '';
+    const ph = kind === 'checklist'
+      ? '• Flight check-in\n• Charger\n• Boots\n• Medications'
+      : 'Write anything…';
+    document.body.insertAdjacentHTML('beforeend', `
+      <div class="note-editor" id="note-editor">
+        <div class="ne-head">
+          <button class="ne-back" data-action="close-editor">← Back</button>
+          <div class="ne-title">${meta.title}</div>
+          <div class="ne-status" id="ne-status">Auto-saves</div>
+        </div>
+        <textarea class="ne-ta" id="ne-ta" placeholder="${ph}"></textarea>
+      </div>`);
+    const ta = $('ne-ta');
+    ta.value = val;
+    setTimeout(() => { ta.focus(); }, 50);
+    editorState = { kind };
+    let t = null;
+    ta.addEventListener('input', () => {
+      clearTimeout(t);
+      t = setTimeout(() => {
+        localStorage.setItem(meta.key, ta.value);
+        const s = $('ne-status');
+        if (s) { s.textContent = '✓ Saved'; setTimeout(() => s.textContent = 'Auto-saves', 1200); }
+      }, 400);
+    });
+  };
+  const closeNoteEditor = () => {
+    $('note-editor')?.remove();
+    editorState = null;
+    render();
+  };
+
+  /* Mic — prefer Web Speech Recognition; fallback to MediaRecorder */
+  let recState = null;
+  const openMicOverlay = (kind) => {
+    const meta = NOTE_META[kind]; if (!meta) return;
+    document.body.insertAdjacentHTML('beforeend', `
+      <div class="mic-overlay" id="mic-overlay">
+        <div class="mic-card">
+          <div class="mic-title">${meta.title} — Voice</div>
+          <div class="mic-dot" id="mic-dot"></div>
+          <div class="mic-status" id="mic-status">Preparing…</div>
+          <div class="mic-transcript" id="mic-transcript"></div>
+          <div class="mic-btns">
+            <button class="mic-cancel" data-action="mic-cancel">Cancel</button>
+            <button class="mic-stop" data-action="mic-stop">Stop &amp; Save</button>
+          </div>
+        </div>
+      </div>`);
+    startMic(kind);
+  };
+
+  const startMic = async (kind) => {
+    const status = $('mic-status');
+    const tEl = $('mic-transcript');
+    const dot = $('mic-dot');
+    const meta = NOTE_META[kind];
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+    if (SR) {
+      try {
+        const rec = new SR();
+        rec.lang = 'en-AU';
+        rec.continuous = true;
+        rec.interimResults = true;
+        let finalText = '';
+        rec.onresult = (e) => {
+          let interim = '';
+          for (let i = e.resultIndex; i < e.results.length; i++) {
+            const r = e.results[i];
+            if (r.isFinal) finalText += r[0].transcript + ' ';
+            else interim += r[0].transcript;
+          }
+          tEl.textContent = (finalText + interim).trim();
+        };
+        rec.onerror = () => { status.textContent = 'Speech error — try again'; };
+        rec.onend = () => { dot?.classList.remove('active'); };
+        rec.start();
+        dot?.classList.add('active');
+        status.textContent = '🎙 Listening… speak now';
+        recState = { kind, kind_: 'sr', rec, getText: () => tEl.textContent.trim() };
+        return;
+      } catch { /* fall through */ }
+    }
+    // Fallback: record audio blob and store as data URL
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mr = new MediaRecorder(stream);
+      const chunks = [];
+      mr.ondataavailable = (e) => chunks.push(e.data);
+      mr.start();
+      dot?.classList.add('active');
+      status.textContent = '🎙 Recording… (speech-to-text unavailable)';
+      tEl.textContent = '(Audio will be saved locally)';
+      recState = { kind, kind_: 'rec', mr, stream, chunks, meta };
+    } catch (err) {
+      status.textContent = 'Microphone unavailable';
+    }
+  };
+
+  const stopMicSave = async () => {
+    if (!recState) return closeMicOverlay();
+    const kind = recState.kind;
+    const meta = NOTE_META[kind];
+    if (recState.kind_ === 'sr') {
+      try { recState.rec.stop(); } catch {}
+      const text = recState.getText();
+      if (text) {
+        const existing = localStorage.getItem(meta.key) || '';
+        const stamp = new Date().toLocaleString('en-AU', { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' });
+        const line = kind === 'checklist'
+          ? text.split(/[,;]|\band\b/i).map(s => s.trim()).filter(Boolean).map(s => `• ${s}`).join('\n')
+          : `[${stamp}] ${text}`;
+        localStorage.setItem(meta.key, existing ? `${existing}\n${line}` : line);
+      }
+    } else if (recState.kind_ === 'rec') {
+      const { mr, stream, chunks } = recState;
+      await new Promise((res) => { mr.onstop = res; try { mr.stop(); } catch { res(); } });
+      stream.getTracks().forEach(t => t.stop());
+      if (chunks.length) {
+        const blob = new Blob(chunks, { type: 'audio/webm' });
+        const dataUrl = await new Promise((res) => {
+          const r = new FileReader(); r.onloadend = () => res(r.result); r.readAsDataURL(blob);
+        });
+        const list = readJSON(KEYS.voice, []);
+        list.push({ kind, at: Date.now(), audio: dataUrl });
+        writeJSON(KEYS.voice, list);
+      }
+    }
+    closeMicOverlay();
+  };
+
+  const closeMicOverlay = () => {
+    if (recState) {
+      try { recState.rec?.stop(); } catch {}
+      try { recState.mr?.stop(); } catch {}
+      recState.stream?.getTracks().forEach(t => t.stop());
+    }
+    recState = null;
+    $('mic-overlay')?.remove();
+    render();
+  };
+
   const menuBtn = (icon, label, sub, action) => `
     <button class="settings-menu-btn" data-action="${action}">
       <span class="smb-icon">${icon}</span>
