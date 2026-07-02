@@ -2037,11 +2037,12 @@ input::-webkit-outer-spin-button { -webkit-appearance: none; }
 }
 .hero-card.notes-card .notes-btn .nb-icon { font-size: 22px; line-height: 1; }
 .hero-card.notes-card .notes-btn.write {
-  border-color: var(--accent-glow-20);
-  background: radial-gradient(80% 100% at 50% 50%, var(--accent-glow-12), transparent 70%), var(--accent-glow-08);
-  box-shadow: 0 0 0 1px var(--accent-glow-08) inset, 0 8px 22px -10px rgba(245,166,35,0.4);
+  border-color: rgba(107,184,255,0.32);
+  background: radial-gradient(80% 100% at 50% 50%, rgba(107,184,255,0.14), transparent 70%), rgba(107,184,255,0.05);
+  box-shadow: 0 0 0 1px rgba(107,184,255,0.10) inset, 0 8px 22px -10px rgba(107,184,255,0.55);
 }
-.hero-card.notes-card .notes-btn.write .nb-icon { color: var(--accent); }
+.hero-card.notes-card .notes-btn.write .nb-icon { color: #6bb8ff; }
+.hero-card.notes-card .notes-btn.write { color: #cfe6ff; }
 .hero-card.notes-card .notes-btn.mic {
   border-color: rgba(29,185,84,0.28);
   background: radial-gradient(80% 100% at 50% 50%, rgba(29,185,84,0.12), transparent 70%), rgba(29,185,84,0.04);
