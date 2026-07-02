@@ -1651,26 +1651,21 @@
     $('settings-panel').innerHTML = `
       <div class="panel-handle"></div>
       <div class="panel-title alarm-title-premium">Music</div>
-      <div class="form-group tight">
-        <label class="label-center">Active Link</label>
-        <input type="url" class="time-input time-input-premium music-url-input"
-               id="spotify-url-input" placeholder="https://open.spotify.com/…"
-               value="${esc(sp.url || '')}" data-action="music-url-change">
-        <button class="notif-btn music-open-btn" data-action="test-spotify" style="margin-top:12px">
-          <span>▶</span><span>Open Spotify Now</span>
-        </button>
-      </div>
       <div class="form-group">
         <label class="label-center">Saved Playlists</label>
         <div id="music-preset-list" class="music-preset-list"></div>
       </div>
       <div class="form-group">
-        <label class="label-center">Add Playlist</label>
-        <div class="music-add-row">
-          <input type="text" id="music-add-name" class="music-add-name" placeholder="Name (e.g. Wake Up)">
-          <input type="url"  id="music-add-url"  class="music-add-url"  placeholder="Paste Spotify link">
+        <label class="label-center">Quick Add</label>
+        <div class="music-slot-grid">
+          ${[0,1,2,3].map(i => `
+            <div class="music-slot">
+              <input type="text" class="music-slot-name" data-slot="${i}" placeholder="Name">
+              <input type="url"  class="music-slot-url"  data-slot="${i}" placeholder="Paste Spotify link">
+              <button type="button" class="music-slot-save" data-action="music-slot-save" data-slot="${i}" aria-label="Save">✓</button>
+            </div>
+          `).join('')}
         </div>
-        <button type="button" class="preset-pill music-add-btn" data-action="music-add">+ Save Playlist</button>
       </div>
       <div class="spotify-status panel-msg" id="spotify-status"></div>`;
     renderMusicPresetList();
@@ -1687,17 +1682,21 @@
     renderMusicPresetList();
     flashMusicMsg(url ? '✓ Active link updated' : 'Cleared');
   };
-  const musicAdd = () => {
-    const name = ($('music-add-name')?.value || '').trim();
-    const url  = ($('music-add-url')?.value  || '').trim();
+  const musicAdd = () => {};
+  const musicSlotSave = (t) => {
+    const slot = t.dataset.slot;
+    const panel = $('settings-panel');
+    const nameEl = panel?.querySelector(`.music-slot-name[data-slot="${slot}"]`);
+    const urlEl  = panel?.querySelector(`.music-slot-url[data-slot="${slot}"]`);
+    const name = (nameEl?.value || '').trim();
+    const url  = (urlEl?.value  || '').trim();
     if (!url) return flashMusicMsg('Paste a link first', true);
     const sp = loadSpotify();
     sp.presets.push({ name: name || 'Playlist', url });
-    sp.url = url; // make new one active
+    sp.url = url;
     saveSpotify(sp);
-    if ($('music-add-name')) $('music-add-name').value = '';
-    if ($('music-add-url'))  $('music-add-url').value  = '';
-    if ($('spotify-url-input')) $('spotify-url-input').value = url;
+    if (nameEl) nameEl.value = '';
+    if (urlEl)  urlEl.value  = '';
     renderMusicPresetList();
     flashMusicMsg('✓ Playlist saved');
   };
@@ -1903,6 +1902,7 @@
     'test-spotify': testSpotifyLink,
     'save-spotify': saveSpotifySub,
     'music-add':      musicAdd,
+    'music-slot-save': musicSlotSave,
     'music-activate': musicActivate,
     'music-delete':   musicDelete,
 
