@@ -1544,6 +1544,50 @@
     const a = loadAlarm(); a.snooze = mins; saveAlarm(a);
   };
 
+  const selectPresetTime = (time) => {
+    if (!time) return;
+    document.querySelectorAll('.preset-pill').forEach((p) => {
+      p.classList.toggle('active', p.dataset.time === time);
+    });
+    const inp = $('alarm-time-input'); if (inp) inp.value = time;
+    const a = loadAlarm();
+    a.time = time; a.on = true;
+    saveAlarm(a);
+    // auto-enable alarm sound engine
+    alarm.fired = false; alarm.snoozeUntil = null;
+    if (alarm.snoozeTimer) { clearTimeout(alarm.snoozeTimer); alarm.snoozeTimer = null; }
+    resumeCtx().then(startKeepAlive);
+    playSilentLoop();
+    // reflect toggle state
+    const tog = $('alarm-toggle'); if (tog) tog.checked = true;
+    const lbl = $('alarm-toggle-label'); if (lbl) { lbl.textContent = 'ON'; lbl.className = 'toggle-status on'; }
+    const sub = $('alarm-toggle-sub'); if (sub) sub.textContent = `Rings at ${fmt12(time)} daily`;
+    renderAlarmStatus();
+    const msg = $('alarm-sub-msg');
+    if (msg) { msg.textContent = `✓ Alarm set for ${fmt12(time)}`; setTimeout(() => { msg.textContent = ''; }, 2000); }
+  };
+
+  const applyNotifButtonState = () => {
+    const btn = $('notif-btn'); const lbl = $('notif-label');
+    if (!btn) return;
+    const state = ('Notification' in window) ? Notification.permission : 'unsupported';
+    btn.classList.remove('on','off');
+    if (state === 'granted') { btn.classList.add('on'); if (lbl) lbl.textContent = '🔔 Notifications ON'; }
+    else if (state === 'unsupported') { btn.classList.add('off'); btn.disabled = true; if (lbl) lbl.textContent = '🔔 Notifications unavailable'; }
+    else { btn.classList.add('off'); if (lbl) lbl.textContent = '🔔 Notifications OFF'; }
+  };
+
+  const toggleNotification = () => {
+    if (!('Notification' in window)) return;
+    if (Notification.permission === 'granted') {
+      // Can't programmatically revoke; guide user
+      const msg = $('alarm-sub-msg');
+      if (msg) { msg.textContent = 'Disable notifications in browser settings'; setTimeout(() => { msg.textContent = ''; }, 2400); }
+      return;
+    }
+    Notification.requestPermission().then(applyNotifButtonState).catch(() => {});
+  };
+
   const saveAlarmSub = () => {
     const t = $('alarm-time-input').value;
     if (!t) return showPanelMsg('Please pick a wake-up time.');
