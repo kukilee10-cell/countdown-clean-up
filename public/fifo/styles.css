@@ -2309,8 +2309,11 @@ input::-webkit-outer-spin-button { -webkit-appearance: none; }
 /* Notes card — Checklist (☰) button: top-right inline with NOTES pill, green pulsing */
 .hero-card.notes-card.premium .hero-roster-btn.checklist-btn {
   top: 16px; right: 16px;
-  width: auto; height: auto;
+  position: absolute;
+  width: auto; height: auto; min-width: 0; max-width: max-content;
+  align-self: flex-start;
   display: inline-flex; align-items: center; gap: 6px;
+  white-space: nowrap;
   padding: 6px 11px;
   border-radius: 999px;
   font-family: var(--mono); font-size: 10.5px; font-weight: 600;
