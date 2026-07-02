@@ -1819,7 +1819,6 @@
     'step': (t) => step(t.dataset.target, parseInt(t.dataset.delta, 10)),
 
     // Alarm subpage
-    'save-alarm':   saveAlarmSub,
     'snooze-pick':  (t) => selectSnoozePill(parseInt(t.dataset.min, 10)),
     'preset-pick':  (t) => selectPresetTime(t.dataset.time),
     'toggle-notification': toggleNotification,
