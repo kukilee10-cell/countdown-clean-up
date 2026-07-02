@@ -60,8 +60,13 @@
   const REM_COLOR_KEYS = Object.keys(REM_COLORS);
   const normalizeReminder = (r) =>
     typeof r === 'string'
-      ? { text: r, color: null }
-      : { text: (r && r.text) || '', color: (r && r.color && REM_COLORS[r.color]) ? r.color : null };
+      ? { text: r, color: null, time: null, notified: false }
+      : {
+          text: (r && r.text) || '',
+          color: (r && r.color && REM_COLORS[r.color]) ? r.color : null,
+          time: (r && typeof r.time === 'string' && /^\d{2}:\d{2}$/.test(r.time)) ? r.time : null,
+          notified: !!(r && r.notified),
+        };
   const loadReminders = () => {
     const raw = readJSON(KEYS.reminders, {});
     const out = {};
