@@ -643,7 +643,7 @@
         h += `
           <div class="rem-item">
             <div class="rem-item-row">
-              <span class="rem-text">${esc(rem.text)}</span>
+              <span class="rem-text">${rem.time ? `<strong style="color:#6bb8ff;font-family:var(--mono);margin-right:8px;">${esc(fmt12(rem.time))}</strong>` : ''}${esc(rem.text)}</span>
               <button class="rem-del" data-action="rem-del" data-date="${dateStr}" data-i="${i}" aria-label="Delete reminder">🗑️</button>
             </div>
             <div class="rem-swatches" role="group" aria-label="Tile colour">${swatches}${noneBtn}</div>
@@ -661,6 +661,10 @@
                  placeholder="e.g. Flight 10:30am, Birthday…" maxlength="120"
                  data-action="rem-input" data-date="${dateStr}">
           <button class="rem-add-btn" data-action="rem-add" data-date="${dateStr}">Add</button>
+        </div>
+        <div class="rem-add-row" style="margin-top:10px;align-items:center;gap:10px;">
+          <label for="reminder-time" style="font-size:13px;color:var(--muted);">Notify at (optional)</label>
+          <input type="time" id="reminder-time" style="background:var(--card);color:var(--fg);border:1px solid var(--border,#333);border-radius:10px;padding:8px 10px;font-family:var(--mono);font-size:14px;">
         </div>
         <div class="rem-swatches rem-swatches-new" role="group" aria-label="Tile colour for new reminder">
           ${REM_COLOR_KEYS.map((k) => `<button type="button" class="rem-swatch" data-action="rem-pick-color" data-color="${k}" aria-label="${REM_COLORS[k].label}" style="background:${REM_COLORS[k].bg};"></button>`).join('')}
