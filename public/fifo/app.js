@@ -724,6 +724,7 @@
       el.innerHTML = '';
       el.classList.add('hidden');
     }
+    updateAlarmBtnState();
   };
 
   /* ──────────────────────────────────────────────────────────
