@@ -789,8 +789,8 @@
         <div class="hero-badge ${isOnSwing ? 'on-site' : 'on-rr'}">
           <span class="hero-badge-dot"></span>${isOnSwing ? 'On Site' : 'On R&R'}
         </div>
-        <button class="hero-roster-btn" data-action="open-roster-sheet" aria-label="Edit roster">
-          <span aria-hidden="true">📅</span>
+        <button class="hero-roster-btn set-roster-btn" data-action="open-roster-sheet" aria-label="Set roster">
+          <span>Set Roster</span>
         </button>
         <div class="hero-number-wrap">
           <div class="hero-number ${hc}" style="--fill:${pct}%">${heroNum}</div>
@@ -840,12 +840,22 @@
           </div>
           <div class="ff-row two">
             <label class="ff-field">
+              <span>Check-in</span>
+              <input type="time" data-flight="checkin" value="${fv('checkin')}" class="mono">
+            </label>
+            <label class="ff-field">
               <span>Departure</span>
               <input type="time" data-flight="time" value="${fv('time')}" class="mono">
             </label>
+          </div>
+          <div class="ff-row two">
             <label class="ff-field">
               <span>Terminal</span>
               <input type="text" data-flight="terminal" value="${fv('terminal')}" placeholder="T2" class="mono">
+            </label>
+            <label class="ff-field">
+              <span>Gate</span>
+              <input type="text" data-flight="gate" value="${fv('gate')}" placeholder="G12" class="mono">
             </label>
           </div>
           <div class="ff-row two">
@@ -1377,9 +1387,7 @@
     $('settings-panel').innerHTML = `
       <div class="panel-handle"></div>
       <div class="panel-title">Settings</div>
-      ${menuBtn('📅', 'Roster &amp; Shift', 'Swing dates, shifts &amp; pattern', 'open-roster')}
-      ${menuBtn('⏰', 'Alarm', alarmSub, 'open-alarm')}
-      ${menuBtn('🎵', 'Spotify', spSub, 'open-spotify-sub')}`;
+      ${menuBtn('⏰', 'Alarm', alarmSub, 'open-alarm')}`;
   };
 
   /* ── Roster subpage */
