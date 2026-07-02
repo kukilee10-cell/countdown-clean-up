@@ -914,8 +914,35 @@
         </form>
       </article>`;
 
-    // --- Card 3: Notes / Checklist (inner swipe) ---
-    const cardNotes = `<div class="notes-in-hero">${buildNotesCard()}</div>`;
+    // --- Card 3: Notes (single card; Checklist opens as sheet) ---
+    const notesText = localStorage.getItem(KEYS.notes) || '';
+    const voiceAll  = readJSON(KEYS.voice, []);
+    const notesPrev = notesText.trim().slice(0, 180);
+    const voiceForNotes = voiceAll.filter(v => v.kind === 'notes').length;
+    const cardNotes = `
+      <article class="hero-card notes-card premium">
+        <div class="hero-glow" aria-hidden="true"></div>
+        <div class="hero-shine" aria-hidden="true"></div>
+        <div class="hero-badge on-site"><span class="hero-badge-dot"></span>Notes</div>
+        <button class="hero-roster-btn" data-action="open-checklist-sheet" aria-label="Open checklist">
+          <span aria-hidden="true">✓</span>
+        </button>
+        <div class="hero-card-title">Notes</div>
+        <div class="notes-preview">${
+          notesPrev
+            ? esc(notesPrev) + (notesText.length > 180 ? '…' : '')
+            : '<em>Tap Write or Mic to capture a note</em>'
+        }</div>
+        <div class="notes-actions">
+          <button class="notes-btn write" data-action="notes-write" data-kind="notes">
+            <span class="nb-icon">✎</span><span>Write</span>
+          </button>
+          <button class="notes-btn mic" data-action="notes-mic" data-kind="notes">
+            <span class="nb-icon">🎙</span><span>Mic</span>
+          </button>
+        </div>
+        ${voiceForNotes ? `<div class="notes-voice-count">${voiceForNotes} voice note${voiceForNotes === 1 ? '' : 's'}</div>` : ''}
+      </article>`;
 
     const cards = [cardCountdown, cardTravel, cardNotes];
     const carousel = `
