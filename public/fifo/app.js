@@ -789,6 +789,9 @@
         <div class="hero-badge ${isOnSwing ? 'on-site' : 'on-rr'}">
           <span class="hero-badge-dot"></span>${isOnSwing ? 'On Site' : 'On R&R'}
         </div>
+        <button class="hero-roster-btn" data-action="open-roster-sheet" aria-label="Edit roster">
+          <span aria-hidden="true">📅</span>
+        </button>
         <div class="hero-number-wrap">
           <div class="hero-number ${hc}" style="--fill:${pct}%">${heroNum}</div>
           <div class="hero-unit">${heroNum === 1 ? 'day' : 'days'} remaining</div>
