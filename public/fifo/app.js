@@ -1902,6 +1902,7 @@
     'test-spotify': testSpotifyLink,
     'save-spotify': saveSpotifySub,
     'music-add':      musicAdd,
+    'music-slot-save': musicSlotSave,
     'music-activate': musicActivate,
     'music-delete':   musicDelete,
 
