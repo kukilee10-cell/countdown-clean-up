@@ -2279,3 +2279,50 @@ input::-webkit-outer-spin-button { -webkit-appearance: none; }
   width: 100%; margin-top: 10px; min-height: 50px;
   font-family: var(--sans); font-size: 15px;
 }
+
+/* ── Pulsing glow pills (tidy-up pass) ─────────────────────── */
+@keyframes pillPulseBlue {
+  0%, 100% { box-shadow: 0 4px 14px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.08), 0 0 0 0 rgba(107,184,255,0.55), 0 0 12px rgba(107,184,255,0.35); }
+  50%      { box-shadow: 0 4px 14px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.08), 0 0 0 6px rgba(107,184,255,0.00), 0 0 22px rgba(107,184,255,0.75); }
+}
+@keyframes pillPulseGreen {
+  0%, 100% { box-shadow: 0 6px 18px -10px rgba(29,185,84,0.55), inset 0 0 0 1px rgba(29,185,84,0.10), 0 0 0 0 rgba(29,185,84,0.55), 0 0 12px rgba(29,185,84,0.35); }
+  50%      { box-shadow: 0 6px 18px -10px rgba(29,185,84,0.70), inset 0 0 0 1px rgba(29,185,84,0.18), 0 0 0 6px rgba(29,185,84,0.00), 0 0 22px rgba(29,185,84,0.80); }
+}
+
+/* Travel card — Flight Details pill: blue pulsing glow */
+.travel-card.premium .hero-badge.on-site {
+  color: #6bb8ff;
+  background: rgba(107,184,255,0.12);
+  border: 1px solid rgba(107,184,255,0.32);
+  animation: pillPulseBlue 2.4s ease-in-out infinite;
+}
+
+/* Notes card — NOTES pill: blue pulsing glow (overrides orange) */
+.hero-card.notes-card.premium .hero-badge {
+  color: #6bb8ff;
+  background: rgba(107,184,255,0.12);
+  border: 1px solid rgba(107,184,255,0.32);
+  animation: pillPulseBlue 2.4s ease-in-out infinite;
+}
+
+/* Notes card — Checklist (☰) button: top-right inline with NOTES pill, green pulsing */
+.hero-card.notes-card.premium .hero-roster-btn.checklist-btn {
+  top: 12px; right: 16px;
+  width: auto; height: 30px;
+  padding: 0 14px;
+  border-radius: 999px;
+  font-family: var(--mono); font-size: 13px; font-weight: 700;
+  letter-spacing: 0.08em;
+  color: #7dffb0;
+  border: 1px solid rgba(29,185,84,0.32);
+  background:
+    radial-gradient(120% 140% at 50% 0%, rgba(29,185,84,0.18), transparent 70%),
+    rgba(29,185,84,0.06);
+  animation: pillPulseGreen 2.4s ease-in-out infinite;
+}
+.hero-card.notes-card.premium .hero-roster-btn.checklist-btn:hover {
+  background:
+    radial-gradient(120% 140% at 50% 0%, rgba(29,185,84,0.28), transparent 70%),
+    rgba(29,185,84,0.08);
+}
