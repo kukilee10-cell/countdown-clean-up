@@ -682,8 +682,11 @@
     const input = $('reminder-input');
     const text = (input?.value || '').trim();
     if (!text) return;
+    const timeInput = $('reminder-time');
+    const timeVal = (timeInput?.value || '').trim();
+    const time = /^\d{2}:\d{2}$/.test(timeVal) ? timeVal : null;
     const rems = loadReminders();
-    (rems[dateStr] ||= []).push({ text, color: remPickerColor || null });
+    (rems[dateStr] ||= []).push({ text, color: remPickerColor || null, time, notified: false });
     saveReminders(rems);
     openRemindersSub(dateStr);
     render();
