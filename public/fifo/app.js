@@ -1735,6 +1735,8 @@
     'hero-save-roster':     heroSaveRoster,
     'open-roster-sheet':    openRosterSheet,
     'close-roster-sheet':   closeRosterSheet,
+    'open-checklist-sheet': openChecklistSheet,
+    'close-checklist-sheet': closeChecklistSheet,
 
     // Notes card
     'notes-dot':   (t) => goNotesSlide(parseInt(t.dataset.idx, 10)),
