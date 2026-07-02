@@ -1666,6 +1666,8 @@
     'open-alarm-from-hero': () => { openPanel(); openSubAlarm(); },
     'edit-flight':          editFlightDetails,
     'hero-save-roster':     heroSaveRoster,
+    'open-roster-sheet':    openRosterSheet,
+    'close-roster-sheet':   closeRosterSheet,
 
     // Notes card
     'notes-dot':   (t) => goNotesSlide(parseInt(t.dataset.idx, 10)),
