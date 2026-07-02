@@ -1610,6 +1610,7 @@
     'hero-dot': (t) => goHeroSlide(parseInt(t.dataset.idx, 10)),
     'open-alarm-from-hero': () => { openPanel(); openSubAlarm(); },
     'edit-flight':          editFlightDetails,
+    'hero-save-roster':     heroSaveRoster,
 
     // Notes card
     'notes-dot':   (t) => goNotesSlide(parseInt(t.dataset.idx, 10)),
