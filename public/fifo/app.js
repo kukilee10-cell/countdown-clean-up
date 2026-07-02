@@ -789,6 +789,9 @@
         <div class="hero-badge ${isOnSwing ? 'on-site' : 'on-rr'}">
           <span class="hero-badge-dot"></span>${isOnSwing ? 'On Site' : 'On R&R'}
         </div>
+        <button class="hero-roster-btn" data-action="open-roster-sheet" aria-label="Edit roster">
+          <span aria-hidden="true">📅</span>
+        </button>
         <div class="hero-number-wrap">
           <div class="hero-number ${hc}" style="--fill:${pct}%">${heroNum}</div>
           <div class="hero-unit">${heroNum === 1 ? 'day' : 'days'} remaining</div>
@@ -911,7 +914,7 @@
         </form>
       </article>`;
 
-    const cards = [cardCountdown, cardTravel, cardRoster];
+    const cards = [cardCountdown, cardTravel];
     const carousel = `
       <section class="hero-carousel-wrap" aria-label="Dashboard">
         <div class="hero-carousel" id="hero-carousel" role="region" aria-roledescription="carousel">
@@ -1073,8 +1076,60 @@
   const heroSaveRoster = () => {
     const s = $('roster-save-status');
     if (s) { s.textContent = '✓ Saved'; s.classList.add('ok'); s.classList.remove('dirty'); }
-    goHeroSlide(0);
-    setTimeout(() => render(), 360);
+    closeRosterSheet();
+  };
+
+  /* ── Roster Sheet (opened from Hero 📅 button) */
+  const openRosterSheet = () => {
+    const roster = loadRoster() || {};
+    const rStart = roster.startDate || isoDate(new Date());
+    const rOn    = roster.daysOn ?? 14;
+    const rOff   = roster.daysOff ?? 7;
+    const rShift = roster.shiftType || 'day';
+    document.body.insertAdjacentHTML('beforeend', `
+      <div class="roster-sheet" id="roster-sheet">
+        <div class="rs-backdrop" data-action="close-roster-sheet"></div>
+        <div class="rs-card hero-card travel-card premium roster-card" role="dialog" aria-modal="true" aria-label="Edit roster">
+          <div class="hero-glow" aria-hidden="true"></div>
+          <div class="hero-shine" aria-hidden="true"></div>
+          <button class="rs-close" data-action="close-roster-sheet" aria-label="Close">✕</button>
+          <div class="hero-badge on-site"><span class="hero-badge-dot"></span>Roster &amp; Shift</div>
+          <div class="hero-card-title">Roster</div>
+          <form class="flight-form" onsubmit="return false;">
+            <label class="ff-field">
+              <span>Swing Start Date</span>
+              <input type="date" data-roster="startDate" value="${esc(rStart)}" class="mono">
+            </label>
+            <div class="ff-row two">
+              <label class="ff-field">
+                <span>Days On</span>
+                <input type="number" min="1" max="365" data-roster="daysOn" value="${rOn}" class="mono">
+              </label>
+              <label class="ff-field">
+                <span>Days Off</span>
+                <input type="number" min="1" max="365" data-roster="daysOff" value="${rOff}" class="mono">
+              </label>
+            </div>
+            <label class="ff-field">
+              <span>Current Shift</span>
+              <select data-roster="shiftType">
+                <option value="day"   ${rShift === 'day'   ? 'selected' : ''}>☀️ Day Shift</option>
+                <option value="night" ${rShift === 'night' ? 'selected' : ''}>🌙 Night Shift</option>
+              </select>
+            </label>
+            <div class="ff-status" id="roster-save-status">Changes save when you tap Save</div>
+            <button type="button" class="ff-save-btn" data-action="hero-save-roster">
+              <span>💾</span><span>Save &amp; Return</span>
+            </button>
+          </form>
+        </div>
+      </div>`);
+    document.body.style.overflow = 'hidden';
+  };
+  const closeRosterSheet = () => {
+    $('roster-sheet')?.remove();
+    document.body.style.overflow = '';
+    render();
   };
 
   /* ──────────────────────────────────────────────────────────
@@ -1611,6 +1666,8 @@
     'open-alarm-from-hero': () => { openPanel(); openSubAlarm(); },
     'edit-flight':          editFlightDetails,
     'hero-save-roster':     heroSaveRoster,
+    'open-roster-sheet':    openRosterSheet,
+    'close-roster-sheet':   closeRosterSheet,
 
     // Notes card
     'notes-dot':   (t) => goNotesSlide(parseInt(t.dataset.idx, 10)),
