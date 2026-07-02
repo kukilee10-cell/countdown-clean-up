@@ -1752,13 +1752,11 @@
       <div class="form-group">
         <label class="label-center">Quick Add</label>
         <div class="music-slot-grid">
-          ${[0,1,2,3].map(i => `
-            <div class="music-slot">
-              <input type="text" class="music-slot-name" data-slot="${i}" placeholder="Name">
-              <input type="url"  class="music-slot-url"  data-slot="${i}" placeholder="Paste Spotify link">
-              <button type="button" class="music-slot-save" data-action="music-slot-save" data-slot="${i}" aria-label="Save">✓</button>
-            </div>
-          `).join('')}
+          <div class="music-slot">
+            <input type="text" class="music-slot-name" data-slot="0" placeholder="Name">
+            <input type="url"  class="music-slot-url"  data-slot="0" placeholder="Paste Spotify link">
+            <button type="button" class="music-slot-save" data-action="music-slot-save" data-slot="0" aria-label="Save">✓</button>
+          </div>
         </div>
       </div>
       <div class="spotify-status panel-msg" id="spotify-status"></div>`;
