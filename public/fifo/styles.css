@@ -1655,6 +1655,39 @@ input::-webkit-outer-spin-button { -webkit-appearance: none; }
   .roster-sheet .rs-card { margin: 0; }
 }
 
+/* ══ Notes as 3rd Hero card — nested carousel ═════════════════ */
+.notes-in-hero {
+  width: 100%;
+  display: flex;
+  overscroll-behavior-x: contain;
+}
+.notes-in-hero .notes-carousel-wrap {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  margin-top: 0;
+}
+.notes-in-hero .notes-carousel {
+  min-height: 520px;
+  scroll-snap-type: x mandatory;
+  overscroll-behavior-x: contain;
+  touch-action: pan-x;
+}
+.notes-in-hero .notes-slide {
+  flex: 0 0 100%;
+  scroll-snap-align: center;
+  scroll-snap-stop: always;
+  padding-right: 0;
+  display: flex;
+}
+.notes-in-hero .notes-slide > .hero-card {
+  width: 100%;
+  min-height: 520px;
+}
+.notes-in-hero .hero-dots {
+  margin-top: 12px;
+}
+
 /* Green glow on the Fly Home date field */
 .flight-form .ff-field.glow-green {
   border-color: rgba(29,185,84,0.28);
