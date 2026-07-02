@@ -42,7 +42,11 @@
   const saveRoster    = (d) => writeJSON(KEYS.roster, d);
   const loadAlarm     = () => readJSON(KEYS.alarm, { time: '06:00', on: false, snooze: 10 });
   const saveAlarm     = (d) => writeJSON(KEYS.alarm, d);
-  const loadSpotify   = () => readJSON(KEYS.spotify, { url: '' });
+  const loadSpotify   = () => {
+    const d = readJSON(KEYS.spotify, { url: '', presets: [] });
+    if (!Array.isArray(d.presets)) d.presets = [];
+    return d;
+  };
   const saveSpotify   = (d) => writeJSON(KEYS.spotify, d);
   const REM_COLORS = {
     red:    { bg: '#ef4444', fg: '#ffffff', label: 'Red' },
