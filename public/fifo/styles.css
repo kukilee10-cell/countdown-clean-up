@@ -1239,14 +1239,84 @@ main {
 /* ── BEDTIME OVERLAY ────────────────────────────────────── */
 #bedtime-overlay {
   display: none; position: fixed; inset: 0; z-index: 99999;
-  background: #000; color: #3a4450;
+  background:
+    radial-gradient(60% 45% at 50% 45%, rgba(74,163,255,0.10), transparent 70%),
+    #000814;
+  color: #6bb8ff;
   flex-direction: column; align-items: center; justify-content: center;
   cursor: pointer; text-align: center;
   user-select: none; -webkit-user-select: none;
 }
 #bedtime-overlay.active { display: flex; }
-.bedtime-title { font-size: 14px; font-family: var(--sans); opacity: 0.3; margin-bottom: 8px; }
-.bedtime-sub   { font-size: 11px; font-family: var(--mono); opacity: 0.15; }
+.bedtime-title {
+  font-size: 15px; font-family: var(--sans); font-weight: 600;
+  letter-spacing: 0.14em; text-transform: uppercase;
+  color: rgba(107,184,255,0.55); margin-bottom: 10px;
+  text-shadow: 0 0 22px rgba(74,163,255,0.35);
+}
+.bedtime-sub {
+  font-size: 11px; font-family: var(--mono);
+  color: rgba(107,184,255,0.25); letter-spacing: 0.06em;
+}
+
+/* Alarm hero button glow states */
+.alarm-btn.armed {
+  border-color: rgba(52,211,153,0.65) !important;
+  color: #7ff0c4 !important;
+  background:
+    radial-gradient(120% 140% at 50% 0%, rgba(52,211,153,0.22), transparent 70%),
+    linear-gradient(180deg, rgba(52,211,153,0.14), rgba(52,211,153,0.05)) !important;
+  box-shadow:
+    0 0 0 1px rgba(52,211,153,0.20) inset,
+    inset 0 1px 0 rgba(255,255,255,0.10),
+    0 0 26px -6px rgba(52,211,153,0.70),
+    0 8px 22px -10px rgba(52,211,153,0.55) !important;
+}
+.alarm-btn.armed span { color: #d5ffe9 !important; }
+.alarm-btn.bedtime {
+  animation: alarm-bedtime-pulse 2.4s ease-in-out infinite;
+}
+.alarm-btn.armed.bedtime {
+  animation: alarm-armed-bedtime-pulse 2.4s ease-in-out infinite;
+}
+@keyframes alarm-bedtime-pulse {
+  0%, 100% {
+    box-shadow:
+      0 0 0 1px rgba(74,163,255,0.20) inset,
+      inset 0 1px 0 rgba(255,255,255,0.10),
+      0 0 18px -6px rgba(74,163,255,0.65),
+      0 8px 22px -10px rgba(74,163,255,0.55);
+  }
+  50% {
+    box-shadow:
+      0 0 0 1px rgba(74,163,255,0.35) inset,
+      inset 0 1px 0 rgba(255,255,255,0.14),
+      0 0 34px -4px rgba(74,163,255,0.95),
+      0 10px 30px -8px rgba(74,163,255,0.80);
+  }
+}
+@keyframes alarm-armed-bedtime-pulse {
+  0%, 100% {
+    box-shadow:
+      0 0 0 1px rgba(52,211,153,0.22) inset,
+      inset 0 1px 0 rgba(255,255,255,0.10),
+      0 0 22px -6px rgba(52,211,153,0.70),
+      0 0 18px -4px rgba(74,163,255,0.50);
+  }
+  50% {
+    box-shadow:
+      0 0 0 1px rgba(52,211,153,0.35) inset,
+      inset 0 1px 0 rgba(255,255,255,0.14),
+      0 0 30px -4px rgba(52,211,153,0.85),
+      0 0 34px -4px rgba(74,163,255,0.85);
+  }
+}
+.alarm-btn.longpress-flash {
+  box-shadow:
+    0 0 0 2px rgba(52,211,153,0.55) inset,
+    0 0 30px rgba(52,211,153,0.75) !important;
+  transition: box-shadow 0.15s ease;
+}
 
 /* ════════════════════════════════════════════════════════
    SETTINGS OVERLAY

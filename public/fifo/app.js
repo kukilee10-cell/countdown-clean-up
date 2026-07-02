@@ -277,10 +277,30 @@
     requestWakeLock();
     resumeCtx().then(startKeepAlive);
     playSilentLoop();
+    updateAlarmBtnState();
   };
   const disableBedtime = () => {
     $('bedtime-overlay')?.classList.remove('active');
     if (!alarm.armed) releaseWakeLock();
+    updateAlarmBtnState();
+  };
+
+  const updateAlarmBtnState = () => {
+    const btn = document.getElementById('alarm-hero-btn');
+    if (!btn) return;
+    const armed = !!(loadAlarm().on && loadAlarm().time);
+    const bedtime = !!$('bedtime-overlay')?.classList.contains('active');
+    btn.classList.toggle('armed', armed);
+    btn.classList.toggle('bedtime', bedtime);
+  };
+
+  const toggleBedtime = () => {
+    const on = $('bedtime-overlay')?.classList.contains('active');
+    if (on) disableBedtime();
+    else {
+      enableBedtime();
+      requestNotificationPermission();
+    }
   };
 
   /* ──────────────────────────────────────────────────────────
@@ -704,6 +724,7 @@
       el.innerHTML = '';
       el.classList.add('hidden');
     }
+    updateAlarmBtnState();
   };
 
   /* ──────────────────────────────────────────────────────────
@@ -1869,6 +1890,7 @@
     'open-dont-forget': openSubDontForget,
     'open-notes':       openSubNotes,
     'open-backup':      openSubBackup,
+    'toggle-bedtime':   toggleBedtime,
 
     // Hero carousel
     'hero-dot': (t) => goHeroSlide(parseInt(t.dataset.idx, 10)),
@@ -1925,6 +1947,12 @@
       ev.preventDefault();
       return;
     }
+    // Suppress synthetic click after a long-press on Alarm button
+    if (target.classList?.contains('alarm-btn') && window.__alarmLongPressed) {
+      window.__alarmLongPressed = false;
+      ev.preventDefault();
+      return;
+    }
     actions[target.dataset.action]?.(target, ev);
   });
 
@@ -1951,6 +1979,37 @@
       const y = ev.clientY || ev.touches?.[0]?.clientY || 0;
       if (Math.abs(x - startX) > 10 || Math.abs(y - startY) > 10) {
         moved = true; clearTimeout(timer); timer = null;
+      }
+    };
+    const end = () => { clearTimeout(timer); timer = null; };
+    document.addEventListener('pointerdown', start, { passive: true });
+    document.addEventListener('pointermove', move,  { passive: true });
+    document.addEventListener('pointerup', end,     { passive: true });
+    document.addEventListener('pointercancel', end, { passive: true });
+  })();
+
+  // Long-press on Alarm button → open Alarm settings sheet
+  (() => {
+    let timer = null, startX = 0, startY = 0;
+    const start = (ev) => {
+      const btn = ev.target.closest?.('.alarm-btn');
+      if (!btn) return;
+      startX = ev.clientX || ev.touches?.[0]?.clientX || 0;
+      startY = ev.clientY || ev.touches?.[0]?.clientY || 0;
+      clearTimeout(timer);
+      timer = setTimeout(() => {
+        window.__alarmLongPressed = true;
+        btn.classList.add('longpress-flash');
+        setTimeout(() => btn.classList.remove('longpress-flash'), 300);
+        openPanel(); openSubAlarm();
+      }, 500);
+    };
+    const move = (ev) => {
+      if (!timer) return;
+      const x = ev.clientX || ev.touches?.[0]?.clientX || 0;
+      const y = ev.clientY || ev.touches?.[0]?.clientY || 0;
+      if (Math.abs(x - startX) > 10 || Math.abs(y - startY) > 10) {
+        clearTimeout(timer); timer = null;
       }
     };
     const end = () => { clearTimeout(timer); timer = null; };
