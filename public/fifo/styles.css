@@ -1403,6 +1403,66 @@ input::-webkit-outer-spin-button { -webkit-appearance: none; }
 .toggle input:checked ~ .toggle-thumb { transform: translateX(24px); }
 .toggle-inline { display: flex; align-items: center; gap: 10px; }
 
+/* ── PREMIUM LARGE TOGGLE (Alarm on/off) ────────────────── */
+.alarm-title-premium {
+  text-align: center; font-size: 22px; letter-spacing: 0.02em;
+  background: linear-gradient(180deg, #fff, color-mix(in oklab, var(--accent) 60%, #fff));
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+  border-bottom: none; padding: 4px 22px 18px; margin-bottom: 10px;
+  text-shadow: 0 0 24px color-mix(in oklab, var(--accent) 25%, transparent);
+}
+.alarm-toggle-row { justify-content: center; margin: 4px 0 26px; padding: 0; }
+.label-center { text-align: center; }
+.time-input-premium {
+  font-size: 30px; letter-spacing: 0.04em; font-weight: 600;
+  background: radial-gradient(120% 120% at 50% 0%, color-mix(in oklab, var(--accent) 8%, transparent), transparent 70%),
+              linear-gradient(180deg, rgba(255,255,255,0.03), rgba(0,0,0,0.2));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.05);
+}
+
+.toggle.toggle-lg {
+  width: 108px; height: 56px; border-radius: 999px;
+  display: inline-flex; align-items: center; padding: 0;
+  transition: box-shadow 0.25s, transform 0.1s;
+}
+.toggle.toggle-lg:active { transform: scale(0.98); }
+.toggle.toggle-lg .toggle-track {
+  border-radius: 999px;
+  background: linear-gradient(180deg, #2a1414, #1a0a0a);
+  border: 1.5px solid rgba(255,80,80,0.4);
+  transition: background 0.25s, border-color 0.25s;
+}
+.toggle.toggle-lg input:checked + .toggle-track {
+  background: linear-gradient(180deg, #0e2a18, #082014);
+  border-color: rgba(60,220,130,0.55);
+}
+.toggle.toggle-lg .toggle-thumb {
+  top: 5px; left: 5px; width: 42px; height: 42px;
+  background: linear-gradient(180deg, #fff, #d8d8d8);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.55), inset 0 -2px 4px rgba(0,0,0,0.15);
+}
+.toggle.toggle-lg input:checked ~ .toggle-thumb { transform: translateX(52px); }
+.toggle.toggle-lg.is-on {
+  box-shadow: 0 0 0 1px rgba(60,220,130,0.35),
+              0 0 28px rgba(60,220,130,0.55),
+              0 0 60px rgba(60,220,130,0.25);
+}
+.toggle.toggle-lg.is-off {
+  box-shadow: 0 0 0 1px rgba(255,80,80,0.30),
+              0 0 24px rgba(255,80,80,0.45),
+              0 0 52px rgba(255,80,80,0.20);
+}
+.toggle-status-lg {
+  position: absolute; left: 50%; top: 50%;
+  transform: translate(-50%, -50%);
+  font-family: var(--mono); font-size: 13px; font-weight: 700;
+  letter-spacing: 0.14em; pointer-events: none;
+  text-shadow: 0 0 10px currentColor;
+}
+/* Position label opposite the thumb */
+.toggle.toggle-lg.is-on .toggle-status-lg { left: 30%; color: #4ade80; }
+.toggle.toggle-lg.is-off .toggle-status-lg { left: 70%; color: #ff6b6b; }
+
 /* ── TIME + SNOOZE ──────────────────────────────────────── */
 .time-input {
   width: 100%; background: var(--card); border: 1.5px solid var(--border);
@@ -1448,6 +1508,16 @@ input::-webkit-outer-spin-button { -webkit-appearance: none; }
   box-shadow: 0 0 0 1px var(--accent-glow-12), 0 8px 24px -12px var(--accent),
               inset 0 1px 0 rgba(255,255,255,0.08);
 }
+.preset-pill.active {
+  background: radial-gradient(120% 120% at 50% 0%, rgba(60,220,130,0.22), transparent 70%),
+              linear-gradient(180deg, rgba(255,255,255,0.04), rgba(0,0,0,0.2));
+  border-color: rgba(60,220,130,0.85); color: #4ade80;
+  box-shadow: 0 0 0 1px rgba(60,220,130,0.35),
+              0 0 22px rgba(60,220,130,0.45),
+              0 8px 24px -12px rgba(60,220,130,0.9),
+              inset 0 1px 0 rgba(255,255,255,0.08);
+}
+.snooze-grid { grid-template-columns: repeat(3, 1fr); }
 
 /* Notification toggle button — glow states */
 .notif-btn {
