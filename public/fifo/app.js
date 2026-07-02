@@ -1890,6 +1890,7 @@
     'open-dont-forget': openSubDontForget,
     'open-notes':       openSubNotes,
     'open-backup':      openSubBackup,
+    'toggle-bedtime':   toggleBedtime,
 
     // Hero carousel
     'hero-dot': (t) => goHeroSlide(parseInt(t.dataset.idx, 10)),
