@@ -986,11 +986,14 @@
     const car = $('hero-carousel');
     const dots = $('hero-dots');
     if (!car || !dots) return;
-    car.scrollLeft = 0;
+    const restore = window.__heroSlideIdx || 0;
+    car.scrollLeft = restore * car.clientWidth;
+    window.__heroSlideIdx = 0;
     let raf = null;
     const updateDots = () => {
       const w = car.clientWidth || 1;
       const idx = Math.round(car.scrollLeft / w);
+      window.__heroSlideIdx = idx;
       dots.querySelectorAll('.hero-dot').forEach((d, i) => d.classList.toggle('active', i === idx));
     };
     car.addEventListener('scroll', () => {
