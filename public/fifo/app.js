@@ -904,7 +904,10 @@
               <option value="night" ${rShift === 'night' ? 'selected' : ''}>🌙 Night Shift</option>
             </select>
           </label>
-          <div class="ff-status" id="roster-save-status">Auto-saves & updates the app</div>
+          <div class="ff-status" id="roster-save-status">Changes save when you tap Save</div>
+          <button type="button" class="ff-save-btn" data-action="hero-save-roster">
+            <span>💾</span><span>Save &amp; Return</span>
+          </button>
         </form>
       </article>`;
 
@@ -1065,9 +1068,13 @@
     cur[key] = value;
     saveRoster(cur);
     const s = $('roster-save-status');
-    if (s) { s.textContent = '✓ Saved — updating…'; s.classList.add('ok'); }
-    clearTimeout(saveRosterField._t);
-    saveRosterField._t = setTimeout(() => render(), 400);
+    if (s) { s.textContent = '● Unsaved changes'; s.classList.remove('ok'); s.classList.add('dirty'); }
+  };
+  const heroSaveRoster = () => {
+    const s = $('roster-save-status');
+    if (s) { s.textContent = '✓ Saved'; s.classList.add('ok'); s.classList.remove('dirty'); }
+    goHeroSlide(0);
+    setTimeout(() => render(), 360);
   };
 
   /* ──────────────────────────────────────────────────────────
@@ -1603,6 +1610,7 @@
     'hero-dot': (t) => goHeroSlide(parseInt(t.dataset.idx, 10)),
     'open-alarm-from-hero': () => { openPanel(); openSubAlarm(); },
     'edit-flight':          editFlightDetails,
+    'hero-save-roster':     heroSaveRoster,
 
     // Notes card
     'notes-dot':   (t) => goNotesSlide(parseInt(t.dataset.idx, 10)),

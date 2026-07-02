@@ -1550,6 +1550,37 @@ input::-webkit-outer-spin-button { -webkit-appearance: none; }
   letter-spacing: 0.06em; text-transform: uppercase;
 }
 .flight-form .ff-status.ok { color: var(--ok); }
+.flight-form .ff-status.dirty { color: var(--accent); }
+
+/* Premium Save & Return button (Hero Roster page) */
+.flight-form .ff-save-btn {
+  margin-top: 10px;
+  width: 100%;
+  display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+  padding: 14px 18px;
+  border-radius: 14px;
+  border: 1px solid rgba(245,166,35,0.35);
+  background:
+    radial-gradient(120% 140% at 50% 0%, rgba(245,166,35,0.22), transparent 65%),
+    linear-gradient(180deg, rgba(245,166,35,0.14), rgba(245,166,35,0.06));
+  color: #ffd591;
+  font: 600 14px/1 'Inter', system-ui, sans-serif;
+  letter-spacing: 0.08em; text-transform: uppercase;
+  box-shadow:
+    0 0 0 1px rgba(245,166,35,0.10) inset,
+    0 10px 26px -14px rgba(245,166,35,0.55);
+  cursor: pointer;
+  transition: transform .15s ease, box-shadow .2s ease, background .2s ease;
+}
+.flight-form .ff-save-btn:hover {
+  background:
+    radial-gradient(120% 140% at 50% 0%, rgba(245,166,35,0.30), transparent 65%),
+    linear-gradient(180deg, rgba(245,166,35,0.20), rgba(245,166,35,0.09));
+  box-shadow:
+    0 0 0 1px rgba(245,166,35,0.18) inset,
+    0 14px 32px -14px rgba(245,166,35,0.7);
+}
+.flight-form .ff-save-btn:active { transform: translateY(1px) scale(0.995); }
 
 /* Green glow on the Fly Home date field */
 .flight-form .ff-field.glow-green {
