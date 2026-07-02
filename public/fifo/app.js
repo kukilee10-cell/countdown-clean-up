@@ -331,6 +331,71 @@
   };
 
   /* ──────────────────────────────────────────────────────────
+     REMINDER NOTIFICATIONS (fires when app is opened)
+     ────────────────────────────────────────────────────────── */
+  const showReminderAlert = (rem, dateStr) => {
+    const [y, m, d] = dateStr.split('-');
+    const dateLabel = new Date(+y, +m - 1, +d).toLocaleDateString('en-AU', {
+      weekday: 'long', day: 'numeric', month: 'long',
+    });
+    $('reminder-alert-title').textContent = rem.text || 'Reminder';
+    $('reminder-alert-sub').textContent = rem.time
+      ? `Scheduled for ${fmt12(rem.time)}`
+      : 'Reminder for today';
+    $('reminder-alert-time').textContent = dateLabel;
+    $('reminder-alert').classList.add('active');
+    document.body.style.overflow = 'hidden';
+    if ('Notification' in window && Notification.permission === 'granted') {
+      try {
+        const n = new Notification(rem.text || 'Reminder', {
+          body: rem.time ? `${fmt12(rem.time)} — ${dateLabel}` : dateLabel,
+          tag: `fifo-rem-${dateStr}-${rem.time || ''}`,
+        });
+        n.onclick = () => { window.focus(); n.close(); };
+      } catch { /* ignore */ }
+    }
+    if ('vibrate' in navigator) {
+      try { navigator.vibrate([200, 100, 200]); } catch { /* ignore */ }
+    }
+  };
+  const dismissReminderAlert = () => {
+    $('reminder-alert').classList.remove('active');
+    if (!$('alarm-alert').classList.contains('active')) {
+      document.body.style.overflow = '';
+    }
+  };
+  let reminderAlertQueue = [];
+  const drainReminderQueue = () => {
+    if ($('reminder-alert').classList.contains('active')) return;
+    if ($('alarm-alert').classList.contains('active')) return;
+    const next = reminderAlertQueue.shift();
+    if (next) showReminderAlert(next.rem, next.dateStr);
+  };
+  const checkReminderNotifications = () => {
+    const now = new Date();
+    const todayKey = isoDate(now);
+    const rems = loadReminders();
+    const list = rems[todayKey];
+    if (!list || !list.length) return;
+    let changed = false;
+    list.forEach((rem) => {
+      if (rem.notified) return;
+      if (rem.time) {
+        const [hh, mm] = rem.time.split(':').map(Number);
+        const ts = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hh, mm).getTime();
+        if (now.getTime() < ts) return;
+      }
+      rem.notified = true;
+      changed = true;
+      reminderAlertQueue.push({ rem: { ...rem }, dateStr: todayKey });
+    });
+    if (changed) {
+      saveReminders(rems);
+      drainReminderQueue();
+    }
+  };
+
+  /* ──────────────────────────────────────────────────────────
      ALARM TRIGGER / STOP / SNOOZE
      ────────────────────────────────────────────────────────── */
   const alarm = {
