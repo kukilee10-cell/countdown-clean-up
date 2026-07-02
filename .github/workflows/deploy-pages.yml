@@ -23,14 +23,29 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Verify source folder exists
+        run: |
+          if [ ! -f public/fifo/index.html ]; then
+            echo "::error::public/fifo/index.html not found in repo checkout"
+            ls -la public/ || true
+            exit 1
+          fi
+          echo "Source folder contents:"
+          ls -la public/fifo/
+
       - name: Prepare site
         run: |
+          rm -rf _site
           mkdir -p _site
           cp -R public/fifo/. _site/
           # SPA-friendly 404 fallback
           cp _site/index.html _site/404.html
           # Prevent Jekyll processing
           touch _site/.nojekyll
+          echo "Deployed artifact contents:"
+          ls -la _site/
+          echo "Total size:"
+          du -sh _site/
 
       - uses: actions/configure-pages@v5
 
