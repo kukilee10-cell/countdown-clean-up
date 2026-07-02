@@ -1602,9 +1602,15 @@
     // Hero carousel
     'hero-dot': (t) => goHeroSlide(parseInt(t.dataset.idx, 10)),
     'open-alarm-from-hero': () => { openPanel(); openSubAlarm(); },
-    'open-notes-from-hero': () => { openPanel(); openSubNotes(); },
-    'open-df-from-hero':    () => { openPanel(); openSubDontForget(); },
     'edit-flight':          editFlightDetails,
+
+    // Notes card
+    'notes-dot':   (t) => goNotesSlide(parseInt(t.dataset.idx, 10)),
+    'notes-write': (t) => openNoteEditor(t.dataset.kind),
+    'notes-mic':   (t) => openMicOverlay(t.dataset.kind),
+    'close-editor': closeNoteEditor,
+    'mic-stop':    stopMicSave,
+    'mic-cancel':  closeMicOverlay,
 
     // Roster
     'save-roster':  saveRosterSub,
@@ -1659,6 +1665,12 @@
   document.addEventListener('input', (ev) => {
     const t = ev.target;
     if (t.dataset?.action === 'autosave-text') autosaveText(t.dataset.key, t.dataset.btn, t.id);
+    if (t.dataset?.flight) saveFlightField(t.dataset.flight, t.value);
+    if (t.dataset?.roster) saveRosterField(t.dataset.roster, t.value);
+  });
+  document.addEventListener('change', (ev) => {
+    const t = ev.target;
+    if (t.dataset?.roster) saveRosterField(t.dataset.roster, t.value);
   });
 
   // Calendar swipe nav (left/right) on .cal-grid
