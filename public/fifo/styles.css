@@ -1837,14 +1837,19 @@ input::-webkit-outer-spin-button { -webkit-appearance: none; }
 
 /* Text variant for the Set Roster button (wider pill) */
 .hero-roster-btn.set-roster-btn {
+  top: 16px;
+  left: 50%;
+  right: auto;
+  transform: translateX(-50%);
   width: auto; height: 34px;
-  padding: 0 14px;
+  padding: 0 20px;
   border-radius: 999px;
   font-family: var(--sans);
   font-size: 12px; font-weight: 700;
   letter-spacing: 0.08em; text-transform: uppercase;
   color: #ffd591;
 }
+.hero-roster-btn.set-roster-btn:active { transform: translateX(-50%) scale(0.95); }
 
 /* ══ Roster Sheet (premium modal opened from 📅 button) ═══════ */
 .roster-sheet {
