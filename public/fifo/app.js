@@ -914,8 +914,35 @@
         </form>
       </article>`;
 
-    // --- Card 3: Notes / Checklist (inner swipe) ---
-    const cardNotes = `<div class="notes-in-hero">${buildNotesCard()}</div>`;
+    // --- Card 3: Notes (single card; Checklist opens as sheet) ---
+    const notesText = localStorage.getItem(KEYS.notes) || '';
+    const voiceAll  = readJSON(KEYS.voice, []);
+    const notesPrev = notesText.trim().slice(0, 180);
+    const voiceForNotes = voiceAll.filter(v => v.kind === 'notes').length;
+    const cardNotes = `
+      <article class="hero-card notes-card premium">
+        <div class="hero-glow" aria-hidden="true"></div>
+        <div class="hero-shine" aria-hidden="true"></div>
+        <div class="hero-badge on-site"><span class="hero-badge-dot"></span>Notes</div>
+        <button class="hero-roster-btn" data-action="open-checklist-sheet" aria-label="Open checklist">
+          <span aria-hidden="true">✓</span>
+        </button>
+        <div class="hero-card-title">Notes</div>
+        <div class="notes-preview">${
+          notesPrev
+            ? esc(notesPrev) + (notesText.length > 180 ? '…' : '')
+            : '<em>Tap Write or Mic to capture a note</em>'
+        }</div>
+        <div class="notes-actions">
+          <button class="notes-btn write" data-action="notes-write" data-kind="notes">
+            <span class="nb-icon">✎</span><span>Write</span>
+          </button>
+          <button class="notes-btn mic" data-action="notes-mic" data-kind="notes">
+            <span class="nb-icon">🎙</span><span>Mic</span>
+          </button>
+        </div>
+        ${voiceForNotes ? `<div class="notes-voice-count">${voiceForNotes} voice note${voiceForNotes === 1 ? '' : 's'}</div>` : ''}
+      </article>`;
 
     const cards = [cardCountdown, cardTravel, cardNotes];
     const carousel = `
@@ -935,7 +962,6 @@
 
     renderAlarmStatus();
     setupHeroCarousel();
-    setupNotesCarousel();
   };
 
   /* ──────────────────────────────────────────────────────────
@@ -960,11 +986,14 @@
     const car = $('hero-carousel');
     const dots = $('hero-dots');
     if (!car || !dots) return;
-    car.scrollLeft = 0;
+    const restore = window.__heroSlideIdx || 0;
+    car.scrollLeft = restore * car.clientWidth;
+    window.__heroSlideIdx = 0;
     let raf = null;
     const updateDots = () => {
       const w = car.clientWidth || 1;
       const idx = Math.round(car.scrollLeft / w);
+      window.__heroSlideIdx = idx;
       dots.querySelectorAll('.hero-dot').forEach((d, i) => d.classList.toggle('active', i === idx));
     };
     car.addEventListener('scroll', () => {
@@ -1130,6 +1159,45 @@
   };
   const closeRosterSheet = () => {
     $('roster-sheet')?.remove();
+    document.body.style.overflow = '';
+    render();
+  };
+
+  /* ── Checklist Sheet (opened from Notes card ✓ button) */
+  const openChecklistSheet = () => {
+    const dfText = localStorage.getItem(KEYS.dontForget) || '';
+    const dfItems = dfText.split('\n').map(s => s.trim()).filter(Boolean);
+    const voice = readJSON(KEYS.voice, []);
+    const voiceForChecklist = voice.filter(v => v.kind === 'checklist').length;
+    const preview = dfItems.length
+      ? dfItems.slice(0, 8).map(s => `• ${esc(s.replace(/^[•\-\*]\s*/, ''))}`).join('<br>')
+        + (dfItems.length > 8 ? `<br><span class="muted">+${dfItems.length - 8} more</span>` : '')
+      : '<em>Tap Write or Mic to add checklist items</em>';
+    document.body.insertAdjacentHTML('beforeend', `
+      <div class="roster-sheet" id="checklist-sheet">
+        <div class="rs-backdrop" data-action="close-checklist-sheet"></div>
+        <div class="rs-card hero-card notes-card premium" role="dialog" aria-modal="true" aria-label="Checklist">
+          <div class="hero-glow" aria-hidden="true"></div>
+          <div class="hero-shine" aria-hidden="true"></div>
+          <button class="rs-close" data-action="close-checklist-sheet" aria-label="Close">✕</button>
+          <div class="hero-badge on-site"><span class="hero-badge-dot"></span>Checklist</div>
+          <div class="hero-card-title">Checklist</div>
+          <div class="notes-preview">${preview}</div>
+          <div class="notes-actions">
+            <button class="notes-btn write" data-action="notes-write" data-kind="checklist">
+              <span class="nb-icon">✎</span><span>Write</span>
+            </button>
+            <button class="notes-btn mic" data-action="notes-mic" data-kind="checklist">
+              <span class="nb-icon">🎙</span><span>Mic</span>
+            </button>
+          </div>
+          ${voiceForChecklist ? `<div class="notes-voice-count">${voiceForChecklist} voice note${voiceForChecklist === 1 ? '' : 's'}</div>` : ''}
+        </div>
+      </div>`);
+    document.body.style.overflow = 'hidden';
+  };
+  const closeChecklistSheet = () => {
+    $('checklist-sheet')?.remove();
     document.body.style.overflow = '';
     render();
   };
@@ -1670,6 +1738,8 @@
     'hero-save-roster':     heroSaveRoster,
     'open-roster-sheet':    openRosterSheet,
     'close-roster-sheet':   closeRosterSheet,
+    'open-checklist-sheet': openChecklistSheet,
+    'close-checklist-sheet': closeChecklistSheet,
 
     // Notes card
     'notes-dot':   (t) => goNotesSlide(parseInt(t.dataset.idx, 10)),
