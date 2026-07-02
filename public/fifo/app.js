@@ -858,9 +858,7 @@
           <div class="empty-sub">Enter your swing start date and roster pattern to start counting down.</div>
           <button class="cta-btn" data-action="open-panel">Enter Roster Details</button>
         </div>
-        ${buildCalendar()}
-        <div class="alarm-status-row hidden" id="alarm-status-line"></div>`;
-      renderAlarmStatus();
+        ${buildCalendar()}`;
       return;
     }
 
@@ -1036,8 +1034,8 @@
         <div class="hero-glow" aria-hidden="true"></div>
         <div class="hero-shine" aria-hidden="true"></div>
         <div class="hero-badge on-site"><span class="hero-badge-dot"></span>Notes</div>
-        <button class="hero-roster-btn" data-action="open-checklist-sheet" aria-label="Open checklist">
-          <span aria-hidden="true">✓</span>
+        <button class="hero-roster-btn checklist-btn" data-action="open-checklist-sheet" aria-label="Open checklist">
+          <span aria-hidden="true">☰</span>
         </button>
         <div class="hero-card-title">Notes</div>
         <div class="notes-preview">${
@@ -1069,10 +1067,8 @@
 
     el.innerHTML = `
       ${carousel}
-      ${buildCalendar()}
-      <div class="alarm-status-row hidden" id="alarm-status-line"></div>`;
+      ${buildCalendar()}`;
 
-    renderAlarmStatus();
     setupHeroCarousel();
   };
 
