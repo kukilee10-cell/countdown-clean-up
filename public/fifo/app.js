@@ -1485,6 +1485,8 @@
     $('settings-panel').innerHTML = `
       <div class="panel-handle"></div>
       <div class="panel-title">Settings</div>
+      <button class="sub-back-btn" data-action="close-panel">Close</button>
+      ${menuBtn('📅', 'Roster & Shift', 'Set your swing pattern', 'open-roster')}
       ${menuBtn('⏰', 'Alarm', alarmSub, 'open-alarm')}`;
   };
 
