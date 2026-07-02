@@ -1471,3 +1471,247 @@ input::-webkit-outer-spin-button { -webkit-appearance: none; }
 
 /* visually hidden file input for the backup picker */
 .visually-hidden { display: none !important; }
+/* ═══════════════════════════════════════════════════════════
+   PREMIUM ADDITIONS — coloured glows, Travel/Roster form,
+   Notes card, full-screen editor, mic overlay
+   ═══════════════════════════════════════════════════════════ */
+
+/* Coloured glow on the Hero "next date" panel */
+.hero-card.hero.premium .hero-next.glow-green {
+  border-radius: 18px;
+  padding: 14px 18px;
+  background:
+    radial-gradient(60% 100% at 50% 50%, rgba(29,185,84,0.14), transparent 70%),
+    rgba(29,185,84,0.05);
+  border: 1px solid rgba(29,185,84,0.28);
+  box-shadow:
+    0 0 0 1px rgba(29,185,84,0.18) inset,
+    0 8px 28px -8px rgba(29,185,84,0.35),
+    0 0 24px -4px rgba(29,185,84,0.22);
+}
+.hero-card.hero.premium .hero-next.glow-amber {
+  border-radius: 18px;
+  padding: 14px 18px;
+  background:
+    radial-gradient(60% 100% at 50% 50%, var(--accent-glow-20), transparent 70%),
+    var(--accent-glow-08);
+  border: 1px solid var(--accent-glow-20);
+  box-shadow:
+    0 0 0 1px var(--accent-glow-20) inset,
+    0 8px 28px -8px rgba(245,166,35,0.35),
+    0 0 24px -4px rgba(245,166,35,0.22);
+}
+.hero-card.hero.premium .hero-next.glow-green  .hero-next-date { color: #1db954; }
+.hero-card.hero.premium .hero-next.glow-amber  .hero-next-date { color: var(--accent); }
+
+/* ── Travel & Roster inline forms ─────────────────────────── */
+.hero-card.travel-card.premium .flight-form,
+.hero-card.roster-card .flight-form {
+  display: flex; flex-direction: column; gap: 12px;
+  margin-top: 10px;
+}
+.flight-form .ff-row.two {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+}
+.flight-form .ff-field {
+  display: flex; flex-direction: column; gap: 6px;
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 14px;
+  padding: 10px 12px;
+  transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+}
+.flight-form .ff-field:focus-within {
+  border-color: var(--accent-glow-60);
+  box-shadow: 0 0 0 3px var(--accent-glow-12);
+  background: rgba(255,255,255,0.04);
+}
+.flight-form .ff-field > span {
+  font-size: 10.5px; font-weight: 600;
+  letter-spacing: 0.10em; text-transform: uppercase;
+  color: var(--muted);
+}
+.flight-form .ff-field input,
+.flight-form .ff-field select {
+  background: transparent; border: none; outline: none;
+  color: var(--text); font-family: var(--sans);
+  font-size: 15px; font-weight: 600; padding: 2px 0;
+  min-height: 26px; width: 100%;
+}
+.flight-form .ff-field input.mono { font-family: var(--mono); letter-spacing: 0.04em; }
+.flight-form .ff-field input.up   { text-transform: uppercase; }
+.flight-form .ff-field input::-webkit-calendar-picker-indicator,
+.flight-form .ff-field input[type="time"]::-webkit-calendar-picker-indicator {
+  filter: invert(0.7);
+}
+.flight-form .ff-status {
+  margin-top: 2px; text-align: center;
+  font-size: 11px; color: var(--muted);
+  letter-spacing: 0.06em; text-transform: uppercase;
+}
+.flight-form .ff-status.ok { color: var(--ok); }
+
+/* Green glow on the Fly Home date field */
+.flight-form .ff-field.glow-green {
+  border-color: rgba(29,185,84,0.28);
+  background:
+    radial-gradient(80% 100% at 50% 50%, rgba(29,185,84,0.10), transparent 70%),
+    rgba(29,185,84,0.03);
+  box-shadow: 0 0 0 1px rgba(29,185,84,0.10) inset,
+              0 6px 18px -8px rgba(29,185,84,0.30);
+}
+.flight-form .ff-field.glow-green > span { color: #1db954; }
+.flight-form .ff-field.glow-green:focus-within {
+  border-color: rgba(29,185,84,0.6);
+  box-shadow: 0 0 0 3px rgba(29,185,84,0.14);
+}
+
+/* Amber glow on the Return to Site date field */
+.flight-form .ff-field.glow-amber {
+  border-color: var(--accent-glow-20);
+  background:
+    radial-gradient(80% 100% at 50% 50%, var(--accent-glow-12), transparent 70%),
+    var(--accent-glow-08);
+  box-shadow: 0 0 0 1px var(--accent-glow-08) inset,
+              0 6px 18px -8px rgba(245,166,35,0.30);
+}
+.flight-form .ff-field.glow-amber > span { color: var(--accent); }
+
+/* ── Notes card (below calendar) ──────────────────────────── */
+.notes-carousel-wrap { display: flex; flex-direction: column; gap: 14px; margin-top: 16px; }
+.notes-carousel {
+  display: flex; overflow-x: auto; overflow-y: hidden;
+  scroll-snap-type: x mandatory; scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+.notes-carousel::-webkit-scrollbar { display: none; }
+.notes-slide {
+  flex: 0 0 100%; scroll-snap-align: start; padding-right: 14px; box-sizing: border-box;
+}
+.notes-slide:last-child { padding-right: 0; }
+
+.hero-card.notes-card.premium {
+  min-height: 220px; display: flex; flex-direction: column; gap: 14px;
+}
+.hero-card.notes-card .notes-preview {
+  font-size: 14px; line-height: 1.55; color: var(--text-dim, #b8bcc4);
+  min-height: 40px;
+}
+.hero-card.notes-card .notes-preview em { color: var(--muted); font-style: italic; }
+.hero-card.notes-card .notes-actions {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: auto;
+}
+.hero-card.notes-card .notes-btn {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 6px; padding: 18px 12px; min-height: 82px;
+  border-radius: 16px; cursor: pointer;
+  font-size: 14px; font-weight: 700; letter-spacing: 0.04em;
+  color: var(--text); font-family: var(--sans);
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.03);
+  transition: transform 0.1s, box-shadow 0.2s, border-color 0.2s, background 0.2s;
+}
+.hero-card.notes-card .notes-btn .nb-icon { font-size: 22px; line-height: 1; }
+.hero-card.notes-card .notes-btn.write {
+  border-color: var(--accent-glow-20);
+  background: radial-gradient(80% 100% at 50% 50%, var(--accent-glow-12), transparent 70%), var(--accent-glow-08);
+  box-shadow: 0 0 0 1px var(--accent-glow-08) inset, 0 8px 22px -10px rgba(245,166,35,0.4);
+}
+.hero-card.notes-card .notes-btn.write .nb-icon { color: var(--accent); }
+.hero-card.notes-card .notes-btn.mic {
+  border-color: rgba(29,185,84,0.28);
+  background: radial-gradient(80% 100% at 50% 50%, rgba(29,185,84,0.12), transparent 70%), rgba(29,185,84,0.04);
+  box-shadow: 0 0 0 1px rgba(29,185,84,0.10) inset, 0 8px 22px -10px rgba(29,185,84,0.4);
+}
+.hero-card.notes-card .notes-btn.mic .nb-icon { color: #1db954; }
+.hero-card.notes-card .notes-btn:active { transform: scale(0.97); }
+.hero-card.notes-card .notes-voice-count {
+  font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--muted); text-align: center;
+}
+
+/* ── Full-screen note editor ──────────────────────────────── */
+.note-editor {
+  position: fixed; inset: 0; z-index: 9999;
+  background: var(--bg, #0d0f12);
+  display: flex; flex-direction: column;
+  animation: fadeIn 0.2s ease-out;
+}
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+.note-editor .ne-head {
+  display: flex; align-items: center; gap: 12px;
+  padding: 14px 16px; border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+.note-editor .ne-back {
+  background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08);
+  color: var(--text); border-radius: 10px; padding: 8px 14px;
+  font-family: var(--sans); font-weight: 600; cursor: pointer;
+}
+.note-editor .ne-title {
+  flex: 1; text-align: center; font-weight: 700; font-size: 16px; color: var(--accent);
+  letter-spacing: 0.04em;
+}
+.note-editor .ne-status { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; }
+.note-editor .ne-ta {
+  flex: 1; width: 100%; box-sizing: border-box;
+  background: transparent; border: none; outline: none; resize: none;
+  color: var(--text); font-family: var(--sans);
+  font-size: 17px; line-height: 1.6; padding: 20px;
+}
+.note-editor .ne-ta::placeholder { color: var(--muted); }
+
+/* ── Mic overlay ──────────────────────────────────────────── */
+.mic-overlay {
+  position: fixed; inset: 0; z-index: 9999;
+  background: rgba(0,0,0,0.7); backdrop-filter: blur(8px);
+  display: flex; align-items: center; justify-content: center;
+  padding: 20px; animation: fadeIn 0.2s ease-out;
+}
+.mic-overlay .mic-card {
+  background: var(--card, #16181d); border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 22px; padding: 28px 22px; width: 100%; max-width: 360px;
+  display: flex; flex-direction: column; align-items: center; gap: 18px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+}
+.mic-overlay .mic-title { font-weight: 700; font-size: 15px; color: var(--accent); letter-spacing: 0.06em; text-transform: uppercase; }
+.mic-overlay .mic-dot {
+  width: 70px; height: 70px; border-radius: 50%;
+  background: rgba(29,185,84,0.15);
+  border: 2px solid rgba(29,185,84,0.4);
+  display: flex; align-items: center; justify-content: center;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+.mic-overlay .mic-dot::after {
+  content: '🎙'; font-size: 30px;
+}
+.mic-overlay .mic-dot.active {
+  animation: micPulse 1.2s ease-out infinite;
+}
+@keyframes micPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(29,185,84,0.5); }
+  50%      { box-shadow: 0 0 0 18px rgba(29,185,84,0); }
+}
+.mic-overlay .mic-status { font-size: 13px; color: var(--text); text-align: center; }
+.mic-overlay .mic-transcript {
+  width: 100%; min-height: 60px; max-height: 200px; overflow-y: auto;
+  background: rgba(255,255,255,0.03); border-radius: 12px; padding: 12px;
+  font-size: 14px; line-height: 1.5; color: var(--text);
+  border: 1px solid rgba(255,255,255,0.05);
+}
+.mic-overlay .mic-btns { display: flex; gap: 10px; width: 100%; }
+.mic-overlay .mic-btns button {
+  flex: 1; padding: 14px; border-radius: 12px; font-family: var(--sans);
+  font-weight: 700; font-size: 14px; cursor: pointer;
+}
+.mic-overlay .mic-cancel {
+  background: rgba(255,255,255,0.05); color: var(--text);
+  border: 1px solid rgba(255,255,255,0.08);
+}
+.mic-overlay .mic-stop {
+  background: var(--accent); color: #000; border: none;
+  box-shadow: 0 6px 20px -6px var(--accent-glow-60);
+}
+.mic-overlay .mic-stop:active { transform: scale(0.98); }
+
+/* Roster card: subtle differentiation from Travel */
+.hero-card.roster-card .hero-badge { background: var(--accent-glow-08); border-color: var(--accent-glow-20); }
