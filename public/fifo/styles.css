@@ -1427,6 +1427,58 @@ input::-webkit-outer-spin-button { -webkit-appearance: none; }
   border-color: var(--accent); color: var(--accent);
 }
 
+/* Quick preset time pills — premium */
+.preset-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
+}
+.preset-pill {
+  background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(0,0,0,0.15));
+  border: 1.5px solid var(--border); color: var(--text);
+  border-radius: 14px; padding: 14px 6px; min-height: 54px;
+  font-family: var(--mono); font-size: 15px; font-weight: 600;
+  letter-spacing: 0.02em; cursor: pointer; text-align: center;
+  transition: background 0.18s, border-color 0.18s, color 0.18s, box-shadow 0.18s, transform 0.1s;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
+}
+.preset-pill:active { transform: scale(0.97); }
+.preset-pill.active {
+  background: radial-gradient(120% 120% at 50% 0%, var(--accent-glow-12), transparent 70%),
+              linear-gradient(180deg, rgba(255,255,255,0.04), rgba(0,0,0,0.2));
+  border-color: var(--accent); color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent-glow-12), 0 8px 24px -12px var(--accent),
+              inset 0 1px 0 rgba(255,255,255,0.08);
+}
+
+/* Notification toggle button — glow states */
+.notif-btn {
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  width: 100%; min-height: 52px; padding: 14px 16px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(0,0,0,0.2));
+  border: 1.5px solid var(--border); border-radius: 14px;
+  color: var(--text); font-family: var(--sans); font-size: 15px; font-weight: 600;
+  cursor: pointer; transition: border-color 0.2s, box-shadow 0.2s, color 0.2s, transform 0.1s;
+}
+.notif-btn:active { transform: scale(0.98); }
+.notif-dot {
+  width: 10px; height: 10px; border-radius: 999px; flex: 0 0 auto;
+  background: #ff4b4b; box-shadow: 0 0 10px #ff4b4b, 0 0 20px rgba(255,75,75,0.6);
+  transition: background 0.2s, box-shadow 0.2s;
+}
+.notif-btn.off {
+  border-color: rgba(255,75,75,0.5); color: #ff9a9a;
+  box-shadow: 0 0 0 1px rgba(255,75,75,0.15), 0 0 24px -8px rgba(255,75,75,0.55),
+              inset 0 0 24px -12px rgba(255,75,75,0.35);
+}
+.notif-btn.on {
+  border-color: rgba(52,211,153,0.6); color: #7ff0c4;
+  box-shadow: 0 0 0 1px rgba(52,211,153,0.18), 0 0 28px -8px rgba(52,211,153,0.6),
+              inset 0 0 24px -12px rgba(52,211,153,0.4);
+}
+.notif-btn.on .notif-dot {
+  background: #34d399; box-shadow: 0 0 10px #34d399, 0 0 22px rgba(52,211,153,0.7);
+}
+.notif-btn[disabled] { opacity: 0.5; cursor: not-allowed; }
+
 .panel-save-btn {
   display: block; width: calc(100% - 44px); margin: 4px 22px 0;
   background: var(--accent); color: #000; border: none; border-radius: 14px;
