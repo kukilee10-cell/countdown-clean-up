@@ -1768,9 +1768,8 @@
     // Alarm subpage
     'save-alarm':   saveAlarmSub,
     'snooze-pick':  (t) => selectSnoozePill(parseInt(t.dataset.min, 10)),
-    'enable-sound': enableAlarmSound,
-    'test-sound':   testAlarmSound,
-    'enable-notifications': requestNotificationPermission,
+    'preset-pick':  (t) => selectPresetTime(t.dataset.time),
+    'toggle-notification': toggleNotification,
 
     // Spotify
     'test-spotify': testSpotifyLink,
