@@ -779,6 +779,7 @@
     const nextLabel = isOnSwing
       ? (daysLeft === 0 ? '✈ Flying home today' : '✈ Fly home')
       : '⛏ Next swing';
+    const nextGlowClass = isOnSwing ? 'glow-green' : 'glow-amber';
 
     // --- Card 1: Countdown ---
     const cardCountdown = `
@@ -788,12 +789,11 @@
         <div class="hero-badge ${isOnSwing ? 'on-site' : 'on-rr'}">
           <span class="hero-badge-dot"></span>${isOnSwing ? 'On Site' : 'On R&R'}
         </div>
-        <div class="hero-label">${isOnSwing ? 'Days left on site' : 'Days left at home'}</div>
         <div class="hero-number-wrap">
           <div class="hero-number ${hc}" style="--fill:${pct}%">${heroNum}</div>
           <div class="hero-unit">${heroNum === 1 ? 'day' : 'days'} remaining</div>
         </div>
-        <div class="hero-next">
+        <div class="hero-next ${nextGlowClass}">
           <div class="hero-next-label">${nextLabel}</div>
           <div class="hero-next-date">${formatDateLong(nextDate)}</div>
         </div>
