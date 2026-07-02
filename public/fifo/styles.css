@@ -1185,6 +1185,15 @@ main {
 }
 #alarm-alert.active { display: flex; }
 
+#reminder-alert {
+  display: none; position: fixed; inset: 0; z-index: 9999;
+  background: #0a0c0e;
+  flex-direction: column; align-items: center; justify-content: center;
+  text-align: center; padding: 40px 28px;
+}
+#reminder-alert.active { display: flex; }
+#reminder-alert .alarm-alert-title { color: #6bb8ff; }
+
 @keyframes alarmPulse {
   0%   { background: #0a0c0e; }
   50%  { background: #4a2702; }

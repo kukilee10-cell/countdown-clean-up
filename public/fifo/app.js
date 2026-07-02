@@ -60,8 +60,13 @@
   const REM_COLOR_KEYS = Object.keys(REM_COLORS);
   const normalizeReminder = (r) =>
     typeof r === 'string'
-      ? { text: r, color: null }
-      : { text: (r && r.text) || '', color: (r && r.color && REM_COLORS[r.color]) ? r.color : null };
+      ? { text: r, color: null, time: null, notified: false }
+      : {
+          text: (r && r.text) || '',
+          color: (r && r.color && REM_COLORS[r.color]) ? r.color : null,
+          time: (r && typeof r.time === 'string' && /^\d{2}:\d{2}$/.test(r.time)) ? r.time : null,
+          notified: !!(r && r.notified),
+        };
   const loadReminders = () => {
     const raw = readJSON(KEYS.reminders, {});
     const out = {};
@@ -323,6 +328,71 @@
       });
       n.onclick = () => { window.focus(); n.close(); };
     } catch { /* ignore */ }
+  };
+
+  /* ──────────────────────────────────────────────────────────
+     REMINDER NOTIFICATIONS (fires when app is opened)
+     ────────────────────────────────────────────────────────── */
+  const showReminderAlert = (rem, dateStr) => {
+    const [y, m, d] = dateStr.split('-');
+    const dateLabel = new Date(+y, +m - 1, +d).toLocaleDateString('en-AU', {
+      weekday: 'long', day: 'numeric', month: 'long',
+    });
+    $('reminder-alert-title').textContent = rem.text || 'Reminder';
+    $('reminder-alert-sub').textContent = rem.time
+      ? `Scheduled for ${fmt12(rem.time)}`
+      : 'Reminder for today';
+    $('reminder-alert-time').textContent = dateLabel;
+    $('reminder-alert').classList.add('active');
+    document.body.style.overflow = 'hidden';
+    if ('Notification' in window && Notification.permission === 'granted') {
+      try {
+        const n = new Notification(rem.text || 'Reminder', {
+          body: rem.time ? `${fmt12(rem.time)} — ${dateLabel}` : dateLabel,
+          tag: `fifo-rem-${dateStr}-${rem.time || ''}`,
+        });
+        n.onclick = () => { window.focus(); n.close(); };
+      } catch { /* ignore */ }
+    }
+    if ('vibrate' in navigator) {
+      try { navigator.vibrate([200, 100, 200]); } catch { /* ignore */ }
+    }
+  };
+  const dismissReminderAlert = () => {
+    $('reminder-alert').classList.remove('active');
+    if (!$('alarm-alert').classList.contains('active')) {
+      document.body.style.overflow = '';
+    }
+  };
+  let reminderAlertQueue = [];
+  const drainReminderQueue = () => {
+    if ($('reminder-alert').classList.contains('active')) return;
+    if ($('alarm-alert').classList.contains('active')) return;
+    const next = reminderAlertQueue.shift();
+    if (next) showReminderAlert(next.rem, next.dateStr);
+  };
+  const checkReminderNotifications = () => {
+    const now = new Date();
+    const todayKey = isoDate(now);
+    const rems = loadReminders();
+    const list = rems[todayKey];
+    if (!list || !list.length) return;
+    let changed = false;
+    list.forEach((rem) => {
+      if (rem.notified) return;
+      if (rem.time) {
+        const [hh, mm] = rem.time.split(':').map(Number);
+        const ts = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hh, mm).getTime();
+        if (now.getTime() < ts) return;
+      }
+      rem.notified = true;
+      changed = true;
+      reminderAlertQueue.push({ rem: { ...rem }, dateStr: todayKey });
+    });
+    if (changed) {
+      saveReminders(rems);
+      drainReminderQueue();
+    }
   };
 
   /* ──────────────────────────────────────────────────────────
@@ -638,7 +708,7 @@
         h += `
           <div class="rem-item">
             <div class="rem-item-row">
-              <span class="rem-text">${esc(rem.text)}</span>
+              <span class="rem-text">${rem.time ? `<strong style="color:#6bb8ff;font-family:var(--mono);margin-right:8px;">${esc(fmt12(rem.time))}</strong>` : ''}${esc(rem.text)}</span>
               <button class="rem-del" data-action="rem-del" data-date="${dateStr}" data-i="${i}" aria-label="Delete reminder">🗑️</button>
             </div>
             <div class="rem-swatches" role="group" aria-label="Tile colour">${swatches}${noneBtn}</div>
@@ -657,6 +727,10 @@
                  data-action="rem-input" data-date="${dateStr}">
           <button class="rem-add-btn" data-action="rem-add" data-date="${dateStr}">Add</button>
         </div>
+        <div class="rem-add-row" style="margin-top:10px;align-items:center;gap:10px;">
+          <label for="reminder-time" style="font-size:13px;color:var(--muted);">Notify at (optional)</label>
+          <input type="time" id="reminder-time" style="background:var(--card);color:var(--fg);border:1px solid var(--border,#333);border-radius:10px;padding:8px 10px;font-family:var(--mono);font-size:14px;">
+        </div>
         <div class="rem-swatches rem-swatches-new" role="group" aria-label="Tile colour for new reminder">
           ${REM_COLOR_KEYS.map((k) => `<button type="button" class="rem-swatch" data-action="rem-pick-color" data-color="${k}" aria-label="${REM_COLORS[k].label}" style="background:${REM_COLORS[k].bg};"></button>`).join('')}
           <button type="button" class="rem-swatch rem-swatch-none selected" data-action="rem-pick-color" data-color="" aria-label="No colour">✕</button>
@@ -673,8 +747,11 @@
     const input = $('reminder-input');
     const text = (input?.value || '').trim();
     if (!text) return;
+    const timeInput = $('reminder-time');
+    const timeVal = (timeInput?.value || '').trim();
+    const time = /^\d{2}:\d{2}$/.test(timeVal) ? timeVal : null;
     const rems = loadReminders();
-    (rems[dateStr] ||= []).push({ text, color: remPickerColor || null });
+    (rems[dateStr] ||= []).push({ text, color: remPickerColor || null, time, notified: false });
     saveReminders(rems);
     openRemindersSub(dateStr);
     render();
@@ -1882,6 +1959,7 @@
     'stop-alarm':   stopAlarm,
     'snooze-alarm': snoozeAlarm,
     'open-spotify': openSpotify,
+    'dismiss-reminder': () => { dismissReminderAlert(); drainReminderQueue(); },
 
     // Settings menu
     'open-roster':      openSubRoster,
@@ -2134,6 +2212,14 @@
     return new Date(n.getFullYear(), n.getMonth(), n.getDate() + 1) - n;
   };
   setTimeout(() => { render(); setInterval(render, 86_400_000); }, msToMidnight());
+
+  // Reminder notification checks
+  requestNotificationPermission();
+  checkReminderNotifications();
+  setInterval(checkReminderNotifications, 60_000);
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) checkReminderNotifications();
+  });
 
   // Expose a tiny debug surface (handy in DevTools)
   window.FIFO = { render, loadAlarm, loadRoster, loadReminders, triggerAlarm, stopAlarm };
