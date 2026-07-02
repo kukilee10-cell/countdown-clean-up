@@ -852,12 +852,28 @@
 
     if (!roster) {
       el.innerHTML = `
-        <div class="empty-state">
-          <div class="empty-icon">⛏️</div>
-          <div class="empty-title">Set up your roster</div>
-          <div class="empty-sub">Enter your swing start date and roster pattern to start counting down.</div>
-          <button class="cta-btn" data-action="open-panel">Enter Roster Details</button>
-        </div>
+        <section class="hero-carousel-wrap" aria-label="Dashboard">
+          <div class="hero-carousel">
+            <article class="hero-card hero premium on-rr">
+              <div class="hero-glow" aria-hidden="true"></div>
+              <div class="hero-shine" aria-hidden="true"></div>
+              <div class="hero-badge on-rr">
+                <span class="hero-badge-dot"></span>No Roster Yet
+              </div>
+              <button class="hero-roster-btn set-roster-btn" data-action="open-roster-sheet" aria-label="Set roster">
+                <span>Set Roster</span>
+              </button>
+              <div class="hero-number-wrap">
+                <div class="hero-number" style="--fill:0%">—</div>
+                <div class="hero-unit">days remaining</div>
+              </div>
+              <div class="hero-next glow-amber">
+                <div class="hero-next-label">⛏ Tap “Set Roster” to begin</div>
+                <div class="hero-next-date">Enter your swing start date &amp; pattern</div>
+              </div>
+            </article>
+          </div>
+        </section>
         ${buildCalendar()}`;
       return;
     }
