@@ -277,10 +277,30 @@
     requestWakeLock();
     resumeCtx().then(startKeepAlive);
     playSilentLoop();
+    updateAlarmBtnState();
   };
   const disableBedtime = () => {
     $('bedtime-overlay')?.classList.remove('active');
     if (!alarm.armed) releaseWakeLock();
+    updateAlarmBtnState();
+  };
+
+  const updateAlarmBtnState = () => {
+    const btn = document.getElementById('alarm-hero-btn');
+    if (!btn) return;
+    const armed = !!(loadAlarm().on && loadAlarm().time);
+    const bedtime = !!$('bedtime-overlay')?.classList.contains('active');
+    btn.classList.toggle('armed', armed);
+    btn.classList.toggle('bedtime', bedtime);
+  };
+
+  const toggleBedtime = () => {
+    const on = $('bedtime-overlay')?.classList.contains('active');
+    if (on) disableBedtime();
+    else {
+      enableBedtime();
+      requestNotificationPermission();
+    }
   };
 
   /* ──────────────────────────────────────────────────────────
