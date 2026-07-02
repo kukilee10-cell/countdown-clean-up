@@ -1068,9 +1068,13 @@
     cur[key] = value;
     saveRoster(cur);
     const s = $('roster-save-status');
-    if (s) { s.textContent = '✓ Saved — updating…'; s.classList.add('ok'); }
-    clearTimeout(saveRosterField._t);
-    saveRosterField._t = setTimeout(() => render(), 400);
+    if (s) { s.textContent = '● Unsaved changes'; s.classList.remove('ok'); s.classList.add('dirty'); }
+  };
+  const heroSaveRoster = () => {
+    const s = $('roster-save-status');
+    if (s) { s.textContent = '✓ Saved'; s.classList.add('ok'); s.classList.remove('dirty'); }
+    goHeroSlide(0);
+    setTimeout(() => render(), 360);
   };
 
   /* ──────────────────────────────────────────────────────────
