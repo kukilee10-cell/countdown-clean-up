@@ -13,19 +13,25 @@ export const Route = createFileRoute("/")({
 });
 
 function Index() {
-  // The full Journey Home app is a static site under /public/fifo/.
-  // Serve it here via an iframe so the Lovable published URL shows the real app.
+  // The Journey Home app is a static site under /public/fifo/.
+  // Redirect the Lovable root URL to it so the published site shows the real app.
+  if (typeof window !== "undefined") {
+    window.location.replace("/fifo/index.html");
+  }
   return (
-    <iframe
-      src="/fifo/index.html"
-      title="Journey Home"
+    <div
       style={{
         position: "fixed",
         inset: 0,
-        width: "100vw",
-        height: "100vh",
-        border: "none",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        background: "#0d0f12",
+        color: "#f5a623",
+        fontFamily: "system-ui, sans-serif",
       }}
-    />
+    >
+      Loading Journey Home…
+    </div>
   );
 }
