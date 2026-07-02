@@ -810,113 +810,105 @@
     // --- Card 2: Travel ---
     const flyHomeDate = curFlyHome;
     const returnDate  = isOnSwing ? addDays(curFlyHome, daysOff) : (nextSwing || curEnd);
-    const flyHomeIn   = isOnSwing ? daysLeft : 0;
-    const returnIn    = isOnSwing ? daysLeft + daysOff : offLeft;
-    // Next journey depends on where you are now
-    const nextIsHome  = isOnSwing;
-    const nextDateT   = nextIsHome ? flyHomeDate : returnDate;
-    const nextInT     = nextIsHome ? flyHomeIn   : returnIn;
-    const nextLabelT  = nextIsHome ? 'Fly Home'  : 'Return to Site';
-    const nextClassT  = nextIsHome ? 'accent'    : 'ok';
-    const badgeClassT = nextIsHome ? 'on-site'   : 'on-rr';
-    const badgeTextT  = nextIsHome ? 'Next Flight' : 'Home';
-
-    const flight = readJSON(KEYS.flight, { number: '', time: '', from: '', to: '', terminal: '', airline: '' });
-    const hasFlight = !!(flight.number || flight.time || flight.from || flight.to || flight.terminal || flight.airline);
-
-    const flightDetailsBody = hasFlight ? `
-      <div class="flight-grid">
-        ${flight.airline ? `<div class="flight-cell"><div class="flight-k">Airline</div><div class="flight-v">${esc(flight.airline)}</div></div>` : ''}
-        ${flight.number  ? `<div class="flight-cell"><div class="flight-k">Flight</div><div class="flight-v mono">${esc(flight.number)}</div></div>` : ''}
-        ${flight.time    ? `<div class="flight-cell"><div class="flight-k">Departs</div><div class="flight-v mono">${esc(flight.time)}</div></div>` : ''}
-        ${flight.terminal? `<div class="flight-cell"><div class="flight-k">Terminal</div><div class="flight-v mono">${esc(flight.terminal)}</div></div>` : ''}
-        ${(flight.from || flight.to) ? `
-          <div class="flight-route">
-            <span class="flight-code">${esc(flight.from || '—')}</span>
-            <span class="flight-arrow" aria-hidden="true">→</span>
-            <span class="flight-code">${esc(flight.to || '—')}</span>
-          </div>` : ''}
-      </div>
-      <div class="flight-edit-hint">Tap to edit</div>
-    ` : `
-      <div class="flight-empty">
-        <span class="flight-empty-icon">✈️</span>
-        <span>Tap to add flight details</span>
-      </div>`;
+    const flight = readJSON(KEYS.flight, {});
+    const fv = (k, fallback = '') => esc(flight[k] || fallback);
+    const flyHomeVal = flight.flyHomeDate || isoDate(flyHomeDate);
+    const returnVal  = flight.returnDate  || isoDate(returnDate);
 
     const cardTravel = `
       <article class="hero-card travel-card premium">
         <div class="hero-glow" aria-hidden="true"></div>
         <div class="hero-shine" aria-hidden="true"></div>
-        <div class="hero-badge ${badgeClassT}">
-          <span class="hero-badge-dot"></span>${badgeTextT}
+        <div class="hero-badge on-site">
+          <span class="hero-badge-dot"></span>Flight Details
         </div>
-        <div class="hero-card-title">✈️ Travel</div>
+        <div class="hero-card-title">Travel</div>
 
-        <div class="travel-timeline compact">
-          <div class="tl-row">
-            <div class="tl-dot accent"></div>
-            <div class="tl-content">
-              <div class="tl-label">Fly Home</div>
-              <div class="tl-date">${formatDate(flyHomeDate)}</div>
-            </div>
-            <div class="tl-meta">${isOnSwing
-                ? (flyHomeIn === 0 ? 'Today' : `in ${flyHomeIn}d`)
-                : 'Done'}</div>
+        <form class="flight-form" data-action="noop" onsubmit="return false;">
+          <div class="ff-row two">
+            <label class="ff-field">
+              <span>Airline</span>
+              <input type="text" data-flight="airline" value="${fv('airline')}" placeholder="Qantas">
+            </label>
+            <label class="ff-field">
+              <span>Flight No.</span>
+              <input type="text" data-flight="number" value="${fv('number')}" placeholder="QF123" class="mono">
+            </label>
           </div>
-          <div class="tl-line"></div>
-          <div class="tl-row">
-            <div class="tl-dot ok"></div>
-            <div class="tl-content">
-              <div class="tl-label">Return to Site</div>
-              <div class="tl-date">${formatDate(returnDate)}</div>
-            </div>
-            <div class="tl-meta">in ${returnIn}d</div>
+          <div class="ff-row two">
+            <label class="ff-field">
+              <span>Departure</span>
+              <input type="time" data-flight="time" value="${fv('time')}" class="mono">
+            </label>
+            <label class="ff-field">
+              <span>Terminal</span>
+              <input type="text" data-flight="terminal" value="${fv('terminal')}" placeholder="T2" class="mono">
+            </label>
           </div>
-        </div>
-
-        <button class="flight-details primary ${hasFlight ? 'has-data' : ''}" data-action="edit-flight" aria-label="Edit flight details">
-          <div class="flight-details-head">
-            <span class="flight-details-title">Flight Details</span>
-            <span class="flight-details-chev">${hasFlight ? '✎' : '＋'}</span>
+          <div class="ff-row two">
+            <label class="ff-field">
+              <span>From</span>
+              <input type="text" data-flight="from" value="${fv('from')}" placeholder="PER" maxlength="4" class="mono up">
+            </label>
+            <label class="ff-field">
+              <span>To</span>
+              <input type="text" data-flight="to" value="${fv('to')}" placeholder="SYD" maxlength="4" class="mono up">
+            </label>
           </div>
-          ${flightDetailsBody}
-        </button>
+          <div class="ff-row two">
+            <label class="ff-field glow-green">
+              <span>Fly Home</span>
+              <input type="date" data-flight="flyHomeDate" value="${esc(flyHomeVal)}" class="mono">
+            </label>
+            <label class="ff-field glow-amber">
+              <span>Return to Site</span>
+              <input type="date" data-flight="returnDate" value="${esc(returnVal)}" class="mono">
+            </label>
+          </div>
+          <div class="ff-status" id="flight-save-status">Auto-saves</div>
+        </form>
       </article>`;
 
-    // --- Card 3: Planner ---
-    const notesText  = localStorage.getItem(KEYS.notes) || '';
-    const dfText     = localStorage.getItem(KEYS.dontForget) || '';
-    const dfItems    = dfText.split('\n').map(s => s.trim()).filter(Boolean);
-    const notesPrev  = notesText.trim().slice(0, 140);
-    const cardPlanner = `
-      <article class="hero-card planner-card">
-        <div class="hero-card-title">📝 Planner</div>
-        <button class="planner-block" data-action="open-notes-from-hero">
-          <div class="planner-block-head">
-            <span>Notes</span>
-            <span class="planner-chev">›</span>
+    // --- Card 3: Roster & Shift ---
+    const rStart = roster.startDate || isoDate(new Date());
+    const rOn    = roster.daysOn ?? 14;
+    const rOff   = roster.daysOff ?? 7;
+    const rShift = roster.shiftType || 'day';
+    const cardRoster = `
+      <article class="hero-card travel-card premium roster-card">
+        <div class="hero-glow" aria-hidden="true"></div>
+        <div class="hero-shine" aria-hidden="true"></div>
+        <div class="hero-badge on-site">
+          <span class="hero-badge-dot"></span>Roster & Shift
+        </div>
+        <div class="hero-card-title">Roster</div>
+        <form class="flight-form" onsubmit="return false;">
+          <label class="ff-field">
+            <span>Swing Start Date</span>
+            <input type="date" data-roster="startDate" value="${esc(rStart)}" class="mono">
+          </label>
+          <div class="ff-row two">
+            <label class="ff-field">
+              <span>Days On</span>
+              <input type="number" min="1" max="365" data-roster="daysOn" value="${rOn}" class="mono">
+            </label>
+            <label class="ff-field">
+              <span>Days Off</span>
+              <input type="number" min="1" max="365" data-roster="daysOff" value="${rOff}" class="mono">
+            </label>
           </div>
-          <div class="planner-block-body">${
-            notesPrev ? esc(notesPrev) + (notesText.length > 140 ? '…' : '') : '<em>Tap to add notes for this swing</em>'
-          }</div>
-        </button>
-        <button class="planner-block" data-action="open-df-from-hero">
-          <div class="planner-block-head">
-            <span>Checklist</span>
-            <span class="planner-count">${dfItems.length} item${dfItems.length === 1 ? '' : 's'}</span>
-            <span class="planner-chev">›</span>
-          </div>
-          <div class="planner-block-body">${
-            dfItems.length
-              ? dfItems.slice(0, 3).map(s => `• ${esc(s.replace(/^[•\-\*]\s*/, ''))}`).join('<br>')
-                  + (dfItems.length > 3 ? `<br><span class="muted">+${dfItems.length - 3} more</span>` : '')
-              : '<em>Tap to add packing & check-in items</em>'
-          }</div>
-        </button>
+          <label class="ff-field">
+            <span>Current Shift</span>
+            <select data-roster="shiftType">
+              <option value="day"   ${rShift === 'day'   ? 'selected' : ''}>☀️ Day Shift</option>
+              <option value="night" ${rShift === 'night' ? 'selected' : ''}>🌙 Night Shift</option>
+            </select>
+          </label>
+          <div class="ff-status" id="roster-save-status">Auto-saves & updates the app</div>
+        </form>
       </article>`;
 
-    const cards = [cardCountdown, cardTravel, cardPlanner];
+    const cards = [cardCountdown, cardTravel, cardRoster];
     const carousel = `
       <section class="hero-carousel-wrap" aria-label="Dashboard">
         <div class="hero-carousel" id="hero-carousel" role="region" aria-roledescription="carousel">
@@ -930,10 +922,12 @@
     el.innerHTML = `
       ${carousel}
       ${buildCalendar()}
+      ${buildNotesCard()}
       <div class="alarm-status-row hidden" id="alarm-status-line"></div>`;
 
     renderAlarmStatus();
     setupHeroCarousel();
+    setupNotesCarousel();
   };
 
   /* ──────────────────────────────────────────────────────────
