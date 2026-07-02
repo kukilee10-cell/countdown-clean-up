@@ -904,7 +904,10 @@
               <option value="night" ${rShift === 'night' ? 'selected' : ''}>🌙 Night Shift</option>
             </select>
           </label>
-          <div class="ff-status" id="roster-save-status">Auto-saves & updates the app</div>
+          <div class="ff-status" id="roster-save-status">Changes save when you tap Save</div>
+          <button type="button" class="ff-save-btn" data-action="hero-save-roster">
+            <span>💾</span><span>Save &amp; Return</span>
+          </button>
         </form>
       </article>`;
 
