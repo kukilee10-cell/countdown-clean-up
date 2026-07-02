@@ -1959,6 +1959,7 @@
     'stop-alarm':   stopAlarm,
     'snooze-alarm': snoozeAlarm,
     'open-spotify': openSpotify,
+    'dismiss-reminder': () => { dismissReminderAlert(); drainReminderQueue(); },
 
     // Settings menu
     'open-roster':      openSubRoster,
