@@ -914,7 +914,7 @@
         </form>
       </article>`;
 
-    const cards = [cardCountdown, cardTravel, cardRoster];
+    const cards = [cardCountdown, cardTravel];
     const carousel = `
       <section class="hero-carousel-wrap" aria-label="Dashboard">
         <div class="hero-carousel" id="hero-carousel" role="region" aria-roledescription="carousel">
