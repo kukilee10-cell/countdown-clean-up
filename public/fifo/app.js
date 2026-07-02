@@ -1160,6 +1160,45 @@
     render();
   };
 
+  /* ── Checklist Sheet (opened from Notes card ✓ button) */
+  const openChecklistSheet = () => {
+    const dfText = localStorage.getItem(KEYS.dontForget) || '';
+    const dfItems = dfText.split('\n').map(s => s.trim()).filter(Boolean);
+    const voice = readJSON(KEYS.voice, []);
+    const voiceForChecklist = voice.filter(v => v.kind === 'checklist').length;
+    const preview = dfItems.length
+      ? dfItems.slice(0, 8).map(s => `• ${esc(s.replace(/^[•\-\*]\s*/, ''))}`).join('<br>')
+        + (dfItems.length > 8 ? `<br><span class="muted">+${dfItems.length - 8} more</span>` : '')
+      : '<em>Tap Write or Mic to add checklist items</em>';
+    document.body.insertAdjacentHTML('beforeend', `
+      <div class="roster-sheet" id="checklist-sheet">
+        <div class="rs-backdrop" data-action="close-checklist-sheet"></div>
+        <div class="rs-card hero-card notes-card premium" role="dialog" aria-modal="true" aria-label="Checklist">
+          <div class="hero-glow" aria-hidden="true"></div>
+          <div class="hero-shine" aria-hidden="true"></div>
+          <button class="rs-close" data-action="close-checklist-sheet" aria-label="Close">✕</button>
+          <div class="hero-badge on-site"><span class="hero-badge-dot"></span>Checklist</div>
+          <div class="hero-card-title">Checklist</div>
+          <div class="notes-preview">${preview}</div>
+          <div class="notes-actions">
+            <button class="notes-btn write" data-action="notes-write" data-kind="checklist">
+              <span class="nb-icon">✎</span><span>Write</span>
+            </button>
+            <button class="notes-btn mic" data-action="notes-mic" data-kind="checklist">
+              <span class="nb-icon">🎙</span><span>Mic</span>
+            </button>
+          </div>
+          ${voiceForChecklist ? `<div class="notes-voice-count">${voiceForChecklist} voice note${voiceForChecklist === 1 ? '' : 's'}</div>` : ''}
+        </div>
+      </div>`);
+    document.body.style.overflow = 'hidden';
+  };
+  const closeChecklistSheet = () => {
+    $('checklist-sheet')?.remove();
+    document.body.style.overflow = '';
+    render();
+  };
+
   /* ──────────────────────────────────────────────────────────
      NOTES EDITOR (full-screen) + MIC (speech-to-text or recorder)
      ────────────────────────────────────────────────────────── */
