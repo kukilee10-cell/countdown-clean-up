@@ -1035,7 +1035,7 @@
         <div class="hero-shine" aria-hidden="true"></div>
         <div class="hero-badge on-site"><span class="hero-badge-dot"></span>Notes</div>
         <button class="hero-roster-btn checklist-btn" data-action="open-checklist-sheet" aria-label="Open checklist">
-          <span aria-hidden="true">☰</span>
+          <span class="hero-badge-dot" aria-hidden="true"></span>List
         </button>
         <div class="hero-card-title">Notes</div>
         <div class="notes-preview">${
