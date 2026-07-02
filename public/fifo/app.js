@@ -1919,8 +1919,46 @@
     if (!target) return;
     // Bedtime overlay should only close on its own background, not on its text children
     if (target.dataset.action === 'disable-bedtime' && ev.target !== target) return;
+    // Suppress synthetic click after a long-press on Music button
+    if (target.classList?.contains('music-btn') && window.__musicLongPressed) {
+      window.__musicLongPressed = false;
+      ev.preventDefault();
+      return;
+    }
     actions[target.dataset.action]?.(target, ev);
   });
+
+  // Long-press on Music button → open Music sheet (edit links)
+  (() => {
+    let timer = null, startX = 0, startY = 0, moved = false;
+    const start = (ev) => {
+      const btn = ev.target.closest?.('.music-btn');
+      if (!btn) return;
+      moved = false;
+      startX = ev.clientX || ev.touches?.[0]?.clientX || 0;
+      startY = ev.clientY || ev.touches?.[0]?.clientY || 0;
+      clearTimeout(timer);
+      timer = setTimeout(() => {
+        window.__musicLongPressed = true;
+        btn.classList.add('longpress-flash');
+        setTimeout(() => btn.classList.remove('longpress-flash'), 300);
+        openPanel(); openSubSpotify();
+      }, 500);
+    };
+    const move = (ev) => {
+      if (!timer) return;
+      const x = ev.clientX || ev.touches?.[0]?.clientX || 0;
+      const y = ev.clientY || ev.touches?.[0]?.clientY || 0;
+      if (Math.abs(x - startX) > 10 || Math.abs(y - startY) > 10) {
+        moved = true; clearTimeout(timer); timer = null;
+      }
+    };
+    const end = () => { clearTimeout(timer); timer = null; };
+    document.addEventListener('pointerdown', start, { passive: true });
+    document.addEventListener('pointermove', move,  { passive: true });
+    document.addEventListener('pointerup', end,     { passive: true });
+    document.addEventListener('pointercancel', end, { passive: true });
+  })();
 
   // Overlay click-to-close
   document.addEventListener('click', (ev) => {
