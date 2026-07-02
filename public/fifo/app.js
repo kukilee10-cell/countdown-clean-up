@@ -1902,6 +1902,9 @@
     // Spotify
     'test-spotify': testSpotifyLink,
     'save-spotify': saveSpotifySub,
+    'music-add':      musicAdd,
+    'music-activate': musicActivate,
+    'music-delete':   musicDelete,
 
     // Text saves
     'save-text': (t) => saveText(t.dataset.key, t.dataset.ta, t.dataset.key === KEYS.dontForget ? 'dont-forget-save-btn' : 'notes-save-btn', false),
@@ -1929,6 +1932,7 @@
     const t = ev.target;
     if (t.id === 'alarm-toggle')        toggleAlarmCheckbox(t.checked);
     if (t.id === 'import-file-input')   importBackup(ev);
+    if (t.id === 'spotify-url-input')   musicUrlChange();
   });
 
   // Reminder input "Enter to add" + textarea autosave
