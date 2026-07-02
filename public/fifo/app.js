@@ -1472,42 +1472,31 @@
 
     $('settings-panel').innerHTML = `
       <div class="panel-handle"></div>
-      <div class="panel-title">⏰ Alarm</div>
-      <div class="panel-row">
-        <div>
-          <div class="panel-row-label">Wake-up Alarm</div>
-          <div class="panel-row-sub" id="alarm-toggle-sub">
-            ${a.on ? `Rings at ${fmt12(a.time)} daily` : 'Off'}
-          </div>
-        </div>
-        <div class="toggle-inline">
-          <span class="toggle-status ${a.on ? 'on' : ''}" id="alarm-toggle-label">${a.on ? 'ON' : 'OFF'}</span>
-          <label class="toggle">
-            <input type="checkbox" id="alarm-toggle" ${a.on ? 'checked' : ''} data-action="toggle-alarm">
-            <div class="toggle-track"></div>
-            <div class="toggle-thumb"></div>
-          </label>
-        </div>
+      <div class="panel-title alarm-title-premium">Wake-up Alarm</div>
+      <div class="panel-row alarm-toggle-row">
+        <label class="toggle toggle-lg ${a.on ? 'is-on' : 'is-off'}" id="alarm-toggle-wrap">
+          <input type="checkbox" id="alarm-toggle" ${a.on ? 'checked' : ''} data-action="toggle-alarm">
+          <div class="toggle-track"></div>
+          <div class="toggle-thumb"></div>
+          <span class="toggle-status-lg ${a.on ? 'on' : 'off'}" id="alarm-toggle-label">${a.on ? 'ON' : 'OFF'}</span>
+        </label>
       </div>
       <div class="form-group">
-        <label for="alarm-time-input">Wake-up time</label>
-        <input type="time" class="time-input" id="alarm-time-input" value="${a.time || '06:00'}">
+        <label class="label-center" for="alarm-time-input">Wake-up Time</label>
+        <input type="time" class="time-input time-input-premium" id="alarm-time-input" value="${a.time || '06:00'}" data-action="alarm-time-change">
       </div>
       <div class="form-group">
-        <label>Quick presets</label>
+        <label class="label-center">Quick Presets</label>
         <div class="preset-grid">
           ${presets.map(t => `<button type="button" class="preset-pill ${presetPill(t)}" data-action="preset-pick" data-time="${t}">${fmt12(t)}</button>`).join('')}
         </div>
       </div>
       <div class="form-group">
-        <label>Snooze duration</label>
-        <div class="snooze-pills">
-          <button type="button" class="snooze-pill ${pill(5)}"  data-action="snooze-pick" data-min="5">5 min</button>
-          <button type="button" class="snooze-pill ${pill(10)}" data-action="snooze-pick" data-min="10">10 min</button>
-          <button type="button" class="snooze-pill ${pill(15)}" data-action="snooze-pick" data-min="15">15 min</button>
+        <label class="label-center">Snooze Duration</label>
+        <div class="preset-grid snooze-grid">
+          ${[3,5,10,15,20,30].map(m => `<button type="button" class="preset-pill snooze-pill ${pill(m)}" data-action="snooze-pick" data-min="${m}">${m} min</button>`).join('')}
         </div>
       </div>
-      <button class="panel-save-btn" data-action="save-alarm">Save Alarm</button>
       <div id="alarm-sub-msg" class="panel-msg"></div>
       <div class="form-group">
         <button type="button" class="notif-btn ${notifCls}" id="notif-btn" data-action="toggle-notification" ${notifState==='unsupported'?'disabled':''}>
@@ -1518,14 +1507,38 @@
     // Auto-enable alarm sound engine whenever the alarm sheet opens
     resumeCtx().then(startKeepAlive);
     playSilentLoop();
+    const timeInp = $('alarm-time-input');
+    if (timeInp) {
+      timeInp.addEventListener('change', () => {
+        const t = timeInp.value; if (!t) return;
+        const a2 = loadAlarm(); a2.time = t; a2.on = true; saveAlarm(a2);
+        // clear any preset active state (manual)
+        document.querySelectorAll('.preset-pill[data-action="preset-pick"]').forEach(p => {
+          p.classList.toggle('active', p.dataset.time === t);
+        });
+        setAlarmToggleUI(true);
+        renderAlarmStatus();
+        flashAlarmMsg(`✓ Alarm set for ${fmt12(t)}`);
+      });
+    }
+  };
+
+  const setAlarmToggleUI = (on) => {
+    const wrap = $('alarm-toggle-wrap');
+    const tog  = $('alarm-toggle');
+    const lbl  = $('alarm-toggle-label');
+    if (tog) tog.checked = on;
+    if (wrap) { wrap.classList.toggle('is-on', on); wrap.classList.toggle('is-off', !on); }
+    if (lbl) { lbl.textContent = on ? 'ON' : 'OFF'; lbl.className = `toggle-status-lg ${on ? 'on' : 'off'}`; }
+  };
+  const flashAlarmMsg = (txt) => {
+    const msg = $('alarm-sub-msg');
+    if (msg) { msg.textContent = txt; setTimeout(() => { msg.textContent = ''; }, 1800); }
   };
 
   const toggleAlarmCheckbox = (on) => {
     const a = loadAlarm(); a.on = on; saveAlarm(a);
-    const lbl = $('alarm-toggle-label');
-    const sub = $('alarm-toggle-sub');
-    if (lbl) { lbl.textContent = on ? 'ON' : 'OFF'; lbl.className = `toggle-status${on ? ' on' : ''}`; }
-    if (sub) { sub.textContent = on ? `Rings at ${fmt12(a.time)} daily` : 'Off'; }
+    setAlarmToggleUI(on);
     if (!on) {
       alarm.fired = false; alarm.snoozeUntil = null;
       if (alarm.snoozeTimer) { clearTimeout(alarm.snoozeTimer); alarm.snoozeTimer = null; }
@@ -1538,33 +1551,29 @@
   };
 
   const selectSnoozePill = (mins) => {
-    document.querySelectorAll('.snooze-pill').forEach((p) => {
+    document.querySelectorAll('.preset-pill[data-action="snooze-pick"]').forEach((p) => {
       p.classList.toggle('active', parseInt(p.dataset.min, 10) === mins);
     });
     const a = loadAlarm(); a.snooze = mins; saveAlarm(a);
+    flashAlarmMsg(`✓ Snooze set to ${mins} min`);
   };
 
   const selectPresetTime = (time) => {
     if (!time) return;
-    document.querySelectorAll('.preset-pill').forEach((p) => {
+    document.querySelectorAll('.preset-pill[data-action="preset-pick"]').forEach((p) => {
       p.classList.toggle('active', p.dataset.time === time);
     });
     const inp = $('alarm-time-input'); if (inp) inp.value = time;
     const a = loadAlarm();
     a.time = time; a.on = true;
     saveAlarm(a);
-    // auto-enable alarm sound engine
     alarm.fired = false; alarm.snoozeUntil = null;
     if (alarm.snoozeTimer) { clearTimeout(alarm.snoozeTimer); alarm.snoozeTimer = null; }
     resumeCtx().then(startKeepAlive);
     playSilentLoop();
-    // reflect toggle state
-    const tog = $('alarm-toggle'); if (tog) tog.checked = true;
-    const lbl = $('alarm-toggle-label'); if (lbl) { lbl.textContent = 'ON'; lbl.className = 'toggle-status on'; }
-    const sub = $('alarm-toggle-sub'); if (sub) sub.textContent = `Rings at ${fmt12(time)} daily`;
+    setAlarmToggleUI(true);
     renderAlarmStatus();
-    const msg = $('alarm-sub-msg');
-    if (msg) { msg.textContent = `✓ Alarm set for ${fmt12(time)}`; setTimeout(() => { msg.textContent = ''; }, 2000); }
+    flashAlarmMsg(`✓ Alarm set for ${fmt12(time)}`);
   };
 
   const applyNotifButtonState = () => {
