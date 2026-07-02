@@ -2213,6 +2213,14 @@
   };
   setTimeout(() => { render(); setInterval(render, 86_400_000); }, msToMidnight());
 
+  // Reminder notification checks
+  requestNotificationPermission();
+  checkReminderNotifications();
+  setInterval(checkReminderNotifications, 60_000);
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) checkReminderNotifications();
+  });
+
   // Expose a tiny debug surface (handy in DevTools)
   window.FIFO = { render, loadAlarm, loadRoster, loadReminders, triggerAlarm, stopAlarm };
 })();
