@@ -1461,11 +1461,18 @@
     const a = loadAlarm();
     const snooze = parseInt(a.snooze, 10) || 10;
     const pill = (mins) => snooze === mins ? 'active' : '';
+    const presets = ['04:00','04:30','05:00','05:30','06:00','06:30'];
+    const curTime = a.time || '06:00';
+    const presetPill = (t) => curTime === t ? 'active' : '';
+    const notifState = ('Notification' in window) ? Notification.permission : 'unsupported';
+    const notifOn = notifState === 'granted';
+    const notifCls = notifState === 'unsupported' ? 'off' : (notifOn ? 'on' : 'off');
+    const notifLabel = notifState === 'unsupported' ? 'Notifications unavailable'
+                     : notifOn ? 'Notifications ON' : 'Notifications OFF';
 
     $('settings-panel').innerHTML = `
       <div class="panel-handle"></div>
       <div class="panel-title">⏰ Alarm</div>
-      <button class="sub-back-btn" data-action="back-to-menu">Back to Settings</button>
       <div class="panel-row">
         <div>
           <div class="panel-row-label">Wake-up Alarm</div>
@@ -1487,6 +1494,12 @@
         <input type="time" class="time-input" id="alarm-time-input" value="${a.time || '06:00'}">
       </div>
       <div class="form-group">
+        <label>Quick presets</label>
+        <div class="preset-grid">
+          ${presets.map(t => `<button type="button" class="preset-pill ${presetPill(t)}" data-action="preset-pick" data-time="${t}">${fmt12(t)}</button>`).join('')}
+        </div>
+      </div>
+      <div class="form-group">
         <label>Snooze duration</label>
         <div class="snooze-pills">
           <button type="button" class="snooze-pill ${pill(5)}"  data-action="snooze-pick" data-min="5">5 min</button>
@@ -1496,25 +1509,15 @@
       </div>
       <button class="panel-save-btn" data-action="save-alarm">Save Alarm</button>
       <div id="alarm-sub-msg" class="panel-msg"></div>
-      <div class="p-divider"></div>
-      <div class="p-section-head">Alarm Sound &amp; Reliability</div>
-      <div class="form-group btn-stack">
-        <button type="button" class="panel-save-notes-btn" id="enable-sound-btn" data-action="enable-sound">🔊 Enable Alarm Sound</button>
-        <button type="button" class="panel-save-notes-btn" id="test-sound-btn"   data-action="test-sound">🔊 Test Alarm Sound</button>
-        <button type="button" class="panel-save-notes-btn" data-action="enable-notifications">🔔 Enable Notifications (fallback)</button>
+      <div class="form-group">
+        <button type="button" class="notif-btn ${notifCls}" id="notif-btn" data-action="toggle-notification" ${notifState==='unsupported'?'disabled':''}>
+          <span class="notif-dot"></span><span id="notif-label">🔔 ${notifLabel}</span>
+        </button>
       </div>`;
 
-    setTimeout(() => {
-      const ctx = getCtx();
-      if (ctx && ctx.state === 'running') {
-        const btn = $('enable-sound-btn');
-        if (btn) {
-          btn.textContent = '✅ Alarm Sound Enabled';
-          btn.style.borderColor = 'var(--ok)';
-          btn.style.color = 'var(--ok)';
-        }
-      }
-    }, 50);
+    // Auto-enable alarm sound engine whenever the alarm sheet opens
+    resumeCtx().then(startKeepAlive);
+    playSilentLoop();
   };
 
   const toggleAlarmCheckbox = (on) => {
@@ -1539,6 +1542,50 @@
       p.classList.toggle('active', parseInt(p.dataset.min, 10) === mins);
     });
     const a = loadAlarm(); a.snooze = mins; saveAlarm(a);
+  };
+
+  const selectPresetTime = (time) => {
+    if (!time) return;
+    document.querySelectorAll('.preset-pill').forEach((p) => {
+      p.classList.toggle('active', p.dataset.time === time);
+    });
+    const inp = $('alarm-time-input'); if (inp) inp.value = time;
+    const a = loadAlarm();
+    a.time = time; a.on = true;
+    saveAlarm(a);
+    // auto-enable alarm sound engine
+    alarm.fired = false; alarm.snoozeUntil = null;
+    if (alarm.snoozeTimer) { clearTimeout(alarm.snoozeTimer); alarm.snoozeTimer = null; }
+    resumeCtx().then(startKeepAlive);
+    playSilentLoop();
+    // reflect toggle state
+    const tog = $('alarm-toggle'); if (tog) tog.checked = true;
+    const lbl = $('alarm-toggle-label'); if (lbl) { lbl.textContent = 'ON'; lbl.className = 'toggle-status on'; }
+    const sub = $('alarm-toggle-sub'); if (sub) sub.textContent = `Rings at ${fmt12(time)} daily`;
+    renderAlarmStatus();
+    const msg = $('alarm-sub-msg');
+    if (msg) { msg.textContent = `✓ Alarm set for ${fmt12(time)}`; setTimeout(() => { msg.textContent = ''; }, 2000); }
+  };
+
+  const applyNotifButtonState = () => {
+    const btn = $('notif-btn'); const lbl = $('notif-label');
+    if (!btn) return;
+    const state = ('Notification' in window) ? Notification.permission : 'unsupported';
+    btn.classList.remove('on','off');
+    if (state === 'granted') { btn.classList.add('on'); if (lbl) lbl.textContent = '🔔 Notifications ON'; }
+    else if (state === 'unsupported') { btn.classList.add('off'); btn.disabled = true; if (lbl) lbl.textContent = '🔔 Notifications unavailable'; }
+    else { btn.classList.add('off'); if (lbl) lbl.textContent = '🔔 Notifications OFF'; }
+  };
+
+  const toggleNotification = () => {
+    if (!('Notification' in window)) return;
+    if (Notification.permission === 'granted') {
+      // Can't programmatically revoke; guide user
+      const msg = $('alarm-sub-msg');
+      if (msg) { msg.textContent = 'Disable notifications in browser settings'; setTimeout(() => { msg.textContent = ''; }, 2400); }
+      return;
+    }
+    Notification.requestPermission().then(applyNotifButtonState).catch(() => {});
   };
 
   const saveAlarmSub = () => {
@@ -1765,9 +1812,8 @@
     // Alarm subpage
     'save-alarm':   saveAlarmSub,
     'snooze-pick':  (t) => selectSnoozePill(parseInt(t.dataset.min, 10)),
-    'enable-sound': enableAlarmSound,
-    'test-sound':   testAlarmSound,
-    'enable-notifications': requestNotificationPermission,
+    'preset-pick':  (t) => selectPresetTime(t.dataset.time),
+    'toggle-notification': toggleNotification,
 
     // Spotify
     'test-spotify': testSpotifyLink,
