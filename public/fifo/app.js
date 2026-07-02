@@ -914,7 +914,10 @@
         </form>
       </article>`;
 
-    const cards = [cardCountdown, cardTravel];
+    // --- Card 3: Notes / Checklist (inner swipe) ---
+    const cardNotes = `<div class="notes-in-hero">${buildNotesCard()}</div>`;
+
+    const cards = [cardCountdown, cardTravel, cardNotes];
     const carousel = `
       <section class="hero-carousel-wrap" aria-label="Dashboard">
         <div class="hero-carousel" id="hero-carousel" role="region" aria-roledescription="carousel">
@@ -928,7 +931,6 @@
     el.innerHTML = `
       ${carousel}
       ${buildCalendar()}
-      ${buildNotesCard()}
       <div class="alarm-status-row hidden" id="alarm-status-line"></div>`;
 
     renderAlarmStatus();
