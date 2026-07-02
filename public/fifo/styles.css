@@ -177,6 +177,26 @@ header {
 .music-btn span { color: var(--text); font-size: 13px; }
 .music-btn:active { background: rgba(29,185,84,0.18); }
 
+/* ── Alarm button (blue glow, premium) ─────────────────────── */
+.alarm-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 11px 14px;
+  color: #6bb8ff;
+  border: 1px solid rgba(74,163,255,0.38);
+  background:
+    radial-gradient(120% 140% at 50% 0%, rgba(74,163,255,0.18), transparent 70%),
+    linear-gradient(180deg, rgba(74,163,255,0.12), rgba(74,163,255,0.04));
+  box-shadow:
+    0 0 0 1px rgba(74,163,255,0.10) inset,
+    inset 0 1px 0 rgba(255,255,255,0.10),
+    0 8px 22px -10px rgba(74,163,255,0.55);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+.alarm-btn span { color: var(--text); font-size: 13px; }
+.alarm-btn span[aria-hidden="true"] { color: #6bb8ff; font-size: 15px; }
+.alarm-btn:active { background: rgba(74,163,255,0.20); transform: scale(0.98); }
+
 /* ── MAIN ───────────────────────────────────────────────── */
 main {
   flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch;
