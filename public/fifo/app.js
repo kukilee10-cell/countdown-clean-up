@@ -42,7 +42,11 @@
   const saveRoster    = (d) => writeJSON(KEYS.roster, d);
   const loadAlarm     = () => readJSON(KEYS.alarm, { time: '06:00', on: false, snooze: 10 });
   const saveAlarm     = (d) => writeJSON(KEYS.alarm, d);
-  const loadSpotify   = () => readJSON(KEYS.spotify, { url: '' });
+  const loadSpotify   = () => {
+    const d = readJSON(KEYS.spotify, { url: '', presets: [] });
+    if (!Array.isArray(d.presets)) d.presets = [];
+    return d;
+  };
   const saveSpotify   = (d) => writeJSON(KEYS.spotify, d);
   const REM_COLORS = {
     red:    { bg: '#ef4444', fg: '#ffffff', label: 'Red' },
@@ -1617,40 +1621,112 @@
     if (msg) { msg.textContent = '✓ Alarm saved'; setTimeout(() => { msg.textContent = ''; }, 2000); }
   };
 
-  /* ── Spotify subpage */
+  /* ── Music (Spotify) premium sheet ── */
+  const renderMusicPresetList = () => {
+    const sp = loadSpotify();
+    const active = (sp.url || '').trim();
+    const wrap = $('music-preset-list');
+    if (!wrap) return;
+    if (!sp.presets.length) {
+      wrap.innerHTML = `<div class="music-empty">No saved playlists yet — add one below.</div>`;
+      return;
+    }
+    wrap.innerHTML = sp.presets.map((p, i) => {
+      const isActive = p.url === active;
+      return `
+        <div class="music-card ${isActive ? 'active' : ''}" data-action="music-activate" data-i="${i}">
+          <div class="music-card-bar"></div>
+          <div class="music-card-body">
+            <div class="music-card-name">${esc(p.name || 'Untitled')}</div>
+            <div class="music-card-url">${esc(p.url)}</div>
+          </div>
+          ${isActive ? '<div class="music-card-badge">ACTIVE</div>' : ''}
+          <button type="button" class="music-card-del" data-action="music-delete" data-i="${i}" aria-label="Delete">✕</button>
+        </div>`;
+    }).join('');
+  };
+
   const openSubSpotify = () => {
     const sp = loadSpotify();
     $('settings-panel').innerHTML = `
       <div class="panel-handle"></div>
-      <div class="panel-title">🎵 Spotify</div>
-      <button class="sub-back-btn" data-action="back-to-menu">Back to Settings</button>
+      <div class="panel-title alarm-title-premium">Music</div>
       <div class="form-group tight">
-        <label for="spotify-url-input">Playlist, album, or track link</label>
-        <input type="url" class="spotify-url-input" id="spotify-url-input"
-               placeholder="https://open.spotify.com/playlist/…" value="${esc(sp.url || '')}">
+        <label class="label-center">Active Link</label>
+        <input type="url" class="time-input time-input-premium music-url-input"
+               id="spotify-url-input" placeholder="https://open.spotify.com/…"
+               value="${esc(sp.url || '')}" data-action="music-url-change">
+        <button class="notif-btn music-open-btn" data-action="test-spotify" style="margin-top:12px">
+          <span>▶</span><span>Open Spotify Now</span>
+        </button>
       </div>
-      <div class="form-group tight">
-        <button class="spotify-test-btn" data-action="test-spotify">🎵 Test — Open Spotify Now</button>
+      <div class="form-group">
+        <label class="label-center">Saved Playlists</label>
+        <div id="music-preset-list" class="music-preset-list"></div>
       </div>
-      <button class="panel-save-btn spotify-save" data-action="save-spotify">💾 Save Spotify Link</button>
-      <div class="spotify-status" id="spotify-status"></div>`;
+      <div class="form-group">
+        <label class="label-center">Add Playlist</label>
+        <div class="music-add-row">
+          <input type="text" id="music-add-name" class="music-add-name" placeholder="Name (e.g. Wake Up)">
+          <input type="url"  id="music-add-url"  class="music-add-url"  placeholder="Paste Spotify link">
+        </div>
+        <button type="button" class="preset-pill music-add-btn" data-action="music-add">+ Save Playlist</button>
+      </div>
+      <div class="spotify-status panel-msg" id="spotify-status"></div>`;
+    renderMusicPresetList();
   };
 
   const testSpotifyLink = () => {
     const url = ($('spotify-url-input')?.value || '').trim();
-    if (url) saveSpotify({ url });
+    if (url) { const sp = loadSpotify(); sp.url = url; saveSpotify(sp); }
     doOpenSpotify('spotify-status');
   };
-  const saveSpotifySub = () => {
+  const musicUrlChange = () => {
     const url = ($('spotify-url-input')?.value || '').trim();
-    saveSpotify({ url });
-    const s = $('spotify-status');
-    if (s) {
-      s.textContent = url ? '✓ Saved' : 'Cleared';
-      s.className = `spotify-status${url ? ' ok' : ''}`;
-      setTimeout(() => { s.textContent = ''; s.className = 'spotify-status'; }, 2500);
-    }
+    const sp = loadSpotify(); sp.url = url; saveSpotify(sp);
+    renderMusicPresetList();
+    flashMusicMsg(url ? '✓ Active link updated' : 'Cleared');
   };
+  const musicAdd = () => {
+    const name = ($('music-add-name')?.value || '').trim();
+    const url  = ($('music-add-url')?.value  || '').trim();
+    if (!url) return flashMusicMsg('Paste a link first', true);
+    const sp = loadSpotify();
+    sp.presets.push({ name: name || 'Playlist', url });
+    sp.url = url; // make new one active
+    saveSpotify(sp);
+    if ($('music-add-name')) $('music-add-name').value = '';
+    if ($('music-add-url'))  $('music-add-url').value  = '';
+    if ($('spotify-url-input')) $('spotify-url-input').value = url;
+    renderMusicPresetList();
+    flashMusicMsg('✓ Playlist saved');
+  };
+  const musicActivate = (t) => {
+    const i = parseInt(t.dataset.i, 10);
+    const sp = loadSpotify();
+    const p = sp.presets[i]; if (!p) return;
+    sp.url = p.url; saveSpotify(sp);
+    if ($('spotify-url-input')) $('spotify-url-input').value = p.url;
+    renderMusicPresetList();
+    flashMusicMsg(`✓ ${p.name} is active`);
+  };
+  const musicDelete = (t, ev) => {
+    ev?.stopPropagation?.();
+    const i = parseInt(t.dataset.i, 10);
+    const sp = loadSpotify();
+    sp.presets.splice(i, 1);
+    saveSpotify(sp);
+    renderMusicPresetList();
+  };
+  const flashMusicMsg = (txt, err) => {
+    const s = $('spotify-status');
+    if (!s) return;
+    s.textContent = txt;
+    s.className = `spotify-status panel-msg${err ? ' err' : ''}`;
+    setTimeout(() => { s.textContent = ''; }, 1800);
+  };
+  // Legacy alias — no longer wired but kept safe
+  const saveSpotifySub = musicUrlChange;
 
   /* ── Text-area subpages (don't-forget, notes) */
   const makeTextareaSub = ({ title, key, placeholder, btnLabel, btnId, taId }) => () => {
@@ -1826,6 +1902,9 @@
     // Spotify
     'test-spotify': testSpotifyLink,
     'save-spotify': saveSpotifySub,
+    'music-add':      musicAdd,
+    'music-activate': musicActivate,
+    'music-delete':   musicDelete,
 
     // Text saves
     'save-text': (t) => saveText(t.dataset.key, t.dataset.ta, t.dataset.key === KEYS.dontForget ? 'dont-forget-save-btn' : 'notes-save-btn', false),
@@ -1840,8 +1919,46 @@
     if (!target) return;
     // Bedtime overlay should only close on its own background, not on its text children
     if (target.dataset.action === 'disable-bedtime' && ev.target !== target) return;
+    // Suppress synthetic click after a long-press on Music button
+    if (target.classList?.contains('music-btn') && window.__musicLongPressed) {
+      window.__musicLongPressed = false;
+      ev.preventDefault();
+      return;
+    }
     actions[target.dataset.action]?.(target, ev);
   });
+
+  // Long-press on Music button → open Music sheet (edit links)
+  (() => {
+    let timer = null, startX = 0, startY = 0, moved = false;
+    const start = (ev) => {
+      const btn = ev.target.closest?.('.music-btn');
+      if (!btn) return;
+      moved = false;
+      startX = ev.clientX || ev.touches?.[0]?.clientX || 0;
+      startY = ev.clientY || ev.touches?.[0]?.clientY || 0;
+      clearTimeout(timer);
+      timer = setTimeout(() => {
+        window.__musicLongPressed = true;
+        btn.classList.add('longpress-flash');
+        setTimeout(() => btn.classList.remove('longpress-flash'), 300);
+        openPanel(); openSubSpotify();
+      }, 500);
+    };
+    const move = (ev) => {
+      if (!timer) return;
+      const x = ev.clientX || ev.touches?.[0]?.clientX || 0;
+      const y = ev.clientY || ev.touches?.[0]?.clientY || 0;
+      if (Math.abs(x - startX) > 10 || Math.abs(y - startY) > 10) {
+        moved = true; clearTimeout(timer); timer = null;
+      }
+    };
+    const end = () => { clearTimeout(timer); timer = null; };
+    document.addEventListener('pointerdown', start, { passive: true });
+    document.addEventListener('pointermove', move,  { passive: true });
+    document.addEventListener('pointerup', end,     { passive: true });
+    document.addEventListener('pointercancel', end, { passive: true });
+  })();
 
   // Overlay click-to-close
   document.addEventListener('click', (ev) => {
@@ -1853,6 +1970,7 @@
     const t = ev.target;
     if (t.id === 'alarm-toggle')        toggleAlarmCheckbox(t.checked);
     if (t.id === 'import-file-input')   importBackup(ev);
+    if (t.id === 'spotify-url-input')   musicUrlChange();
   });
 
   // Reminder input "Enter to add" + textarea autosave
