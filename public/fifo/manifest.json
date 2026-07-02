@@ -1,7 +1,7 @@
 {
-  "name": "FIFO Countdown",
-  "short_name": "FIFO",
-  "description": "Counting down to R&R",
+  "name": "Journey Home",
+  "short_name": "Journey Home",
+  "description": "Work today. Home tomorrow. The premium countdown for FIFO workers.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
