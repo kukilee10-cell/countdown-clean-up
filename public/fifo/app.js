@@ -16,6 +16,7 @@
     notes:      'fifo_notes_v1',
     reminders:  'fifo_reminders_v1',
     flight:     'fifo_flight_v1',
+    voice:      'fifo_voice_notes_v1',
   };
 
   // ── tiny DOM helpers
@@ -778,6 +779,7 @@
     const nextLabel = isOnSwing
       ? (daysLeft === 0 ? '✈ Flying home today' : '✈ Fly home')
       : '⛏ Next swing';
+    const nextGlowClass = isOnSwing ? 'glow-green' : 'glow-amber';
 
     // --- Card 1: Countdown ---
     const cardCountdown = `
@@ -787,12 +789,11 @@
         <div class="hero-badge ${isOnSwing ? 'on-site' : 'on-rr'}">
           <span class="hero-badge-dot"></span>${isOnSwing ? 'On Site' : 'On R&R'}
         </div>
-        <div class="hero-label">${isOnSwing ? 'Days left on site' : 'Days left at home'}</div>
         <div class="hero-number-wrap">
           <div class="hero-number ${hc}" style="--fill:${pct}%">${heroNum}</div>
           <div class="hero-unit">${heroNum === 1 ? 'day' : 'days'} remaining</div>
         </div>
-        <div class="hero-next">
+        <div class="hero-next ${nextGlowClass}">
           <div class="hero-next-label">${nextLabel}</div>
           <div class="hero-next-date">${formatDateLong(nextDate)}</div>
         </div>
@@ -809,113 +810,105 @@
     // --- Card 2: Travel ---
     const flyHomeDate = curFlyHome;
     const returnDate  = isOnSwing ? addDays(curFlyHome, daysOff) : (nextSwing || curEnd);
-    const flyHomeIn   = isOnSwing ? daysLeft : 0;
-    const returnIn    = isOnSwing ? daysLeft + daysOff : offLeft;
-    // Next journey depends on where you are now
-    const nextIsHome  = isOnSwing;
-    const nextDateT   = nextIsHome ? flyHomeDate : returnDate;
-    const nextInT     = nextIsHome ? flyHomeIn   : returnIn;
-    const nextLabelT  = nextIsHome ? 'Fly Home'  : 'Return to Site';
-    const nextClassT  = nextIsHome ? 'accent'    : 'ok';
-    const badgeClassT = nextIsHome ? 'on-site'   : 'on-rr';
-    const badgeTextT  = nextIsHome ? 'Next Flight' : 'Home';
-
-    const flight = readJSON(KEYS.flight, { number: '', time: '', from: '', to: '', terminal: '', airline: '' });
-    const hasFlight = !!(flight.number || flight.time || flight.from || flight.to || flight.terminal || flight.airline);
-
-    const flightDetailsBody = hasFlight ? `
-      <div class="flight-grid">
-        ${flight.airline ? `<div class="flight-cell"><div class="flight-k">Airline</div><div class="flight-v">${esc(flight.airline)}</div></div>` : ''}
-        ${flight.number  ? `<div class="flight-cell"><div class="flight-k">Flight</div><div class="flight-v mono">${esc(flight.number)}</div></div>` : ''}
-        ${flight.time    ? `<div class="flight-cell"><div class="flight-k">Departs</div><div class="flight-v mono">${esc(flight.time)}</div></div>` : ''}
-        ${flight.terminal? `<div class="flight-cell"><div class="flight-k">Terminal</div><div class="flight-v mono">${esc(flight.terminal)}</div></div>` : ''}
-        ${(flight.from || flight.to) ? `
-          <div class="flight-route">
-            <span class="flight-code">${esc(flight.from || '—')}</span>
-            <span class="flight-arrow" aria-hidden="true">→</span>
-            <span class="flight-code">${esc(flight.to || '—')}</span>
-          </div>` : ''}
-      </div>
-      <div class="flight-edit-hint">Tap to edit</div>
-    ` : `
-      <div class="flight-empty">
-        <span class="flight-empty-icon">✈️</span>
-        <span>Tap to add flight details</span>
-      </div>`;
+    const flight = readJSON(KEYS.flight, {});
+    const fv = (k, fallback = '') => esc(flight[k] || fallback);
+    const flyHomeVal = flight.flyHomeDate || isoDate(flyHomeDate);
+    const returnVal  = flight.returnDate  || isoDate(returnDate);
 
     const cardTravel = `
       <article class="hero-card travel-card premium">
         <div class="hero-glow" aria-hidden="true"></div>
         <div class="hero-shine" aria-hidden="true"></div>
-        <div class="hero-badge ${badgeClassT}">
-          <span class="hero-badge-dot"></span>${badgeTextT}
+        <div class="hero-badge on-site">
+          <span class="hero-badge-dot"></span>Flight Details
         </div>
-        <div class="hero-card-title">✈️ Travel</div>
+        <div class="hero-card-title">Travel</div>
 
-        <div class="travel-timeline compact">
-          <div class="tl-row">
-            <div class="tl-dot accent"></div>
-            <div class="tl-content">
-              <div class="tl-label">Fly Home</div>
-              <div class="tl-date">${formatDate(flyHomeDate)}</div>
-            </div>
-            <div class="tl-meta">${isOnSwing
-                ? (flyHomeIn === 0 ? 'Today' : `in ${flyHomeIn}d`)
-                : 'Done'}</div>
+        <form class="flight-form" data-action="noop" onsubmit="return false;">
+          <div class="ff-row two">
+            <label class="ff-field">
+              <span>Airline</span>
+              <input type="text" data-flight="airline" value="${fv('airline')}" placeholder="Qantas">
+            </label>
+            <label class="ff-field">
+              <span>Flight No.</span>
+              <input type="text" data-flight="number" value="${fv('number')}" placeholder="QF123" class="mono">
+            </label>
           </div>
-          <div class="tl-line"></div>
-          <div class="tl-row">
-            <div class="tl-dot ok"></div>
-            <div class="tl-content">
-              <div class="tl-label">Return to Site</div>
-              <div class="tl-date">${formatDate(returnDate)}</div>
-            </div>
-            <div class="tl-meta">in ${returnIn}d</div>
+          <div class="ff-row two">
+            <label class="ff-field">
+              <span>Departure</span>
+              <input type="time" data-flight="time" value="${fv('time')}" class="mono">
+            </label>
+            <label class="ff-field">
+              <span>Terminal</span>
+              <input type="text" data-flight="terminal" value="${fv('terminal')}" placeholder="T2" class="mono">
+            </label>
           </div>
-        </div>
-
-        <button class="flight-details primary ${hasFlight ? 'has-data' : ''}" data-action="edit-flight" aria-label="Edit flight details">
-          <div class="flight-details-head">
-            <span class="flight-details-title">Flight Details</span>
-            <span class="flight-details-chev">${hasFlight ? '✎' : '＋'}</span>
+          <div class="ff-row two">
+            <label class="ff-field">
+              <span>From</span>
+              <input type="text" data-flight="from" value="${fv('from')}" placeholder="PER" maxlength="4" class="mono up">
+            </label>
+            <label class="ff-field">
+              <span>To</span>
+              <input type="text" data-flight="to" value="${fv('to')}" placeholder="SYD" maxlength="4" class="mono up">
+            </label>
           </div>
-          ${flightDetailsBody}
-        </button>
+          <div class="ff-row two">
+            <label class="ff-field glow-green">
+              <span>Fly Home</span>
+              <input type="date" data-flight="flyHomeDate" value="${esc(flyHomeVal)}" class="mono">
+            </label>
+            <label class="ff-field glow-amber">
+              <span>Return to Site</span>
+              <input type="date" data-flight="returnDate" value="${esc(returnVal)}" class="mono">
+            </label>
+          </div>
+          <div class="ff-status" id="flight-save-status">Auto-saves</div>
+        </form>
       </article>`;
 
-    // --- Card 3: Planner ---
-    const notesText  = localStorage.getItem(KEYS.notes) || '';
-    const dfText     = localStorage.getItem(KEYS.dontForget) || '';
-    const dfItems    = dfText.split('\n').map(s => s.trim()).filter(Boolean);
-    const notesPrev  = notesText.trim().slice(0, 140);
-    const cardPlanner = `
-      <article class="hero-card planner-card">
-        <div class="hero-card-title">📝 Planner</div>
-        <button class="planner-block" data-action="open-notes-from-hero">
-          <div class="planner-block-head">
-            <span>Notes</span>
-            <span class="planner-chev">›</span>
+    // --- Card 3: Roster & Shift ---
+    const rStart = roster.startDate || isoDate(new Date());
+    const rOn    = roster.daysOn ?? 14;
+    const rOff   = roster.daysOff ?? 7;
+    const rShift = roster.shiftType || 'day';
+    const cardRoster = `
+      <article class="hero-card travel-card premium roster-card">
+        <div class="hero-glow" aria-hidden="true"></div>
+        <div class="hero-shine" aria-hidden="true"></div>
+        <div class="hero-badge on-site">
+          <span class="hero-badge-dot"></span>Roster & Shift
+        </div>
+        <div class="hero-card-title">Roster</div>
+        <form class="flight-form" onsubmit="return false;">
+          <label class="ff-field">
+            <span>Swing Start Date</span>
+            <input type="date" data-roster="startDate" value="${esc(rStart)}" class="mono">
+          </label>
+          <div class="ff-row two">
+            <label class="ff-field">
+              <span>Days On</span>
+              <input type="number" min="1" max="365" data-roster="daysOn" value="${rOn}" class="mono">
+            </label>
+            <label class="ff-field">
+              <span>Days Off</span>
+              <input type="number" min="1" max="365" data-roster="daysOff" value="${rOff}" class="mono">
+            </label>
           </div>
-          <div class="planner-block-body">${
-            notesPrev ? esc(notesPrev) + (notesText.length > 140 ? '…' : '') : '<em>Tap to add notes for this swing</em>'
-          }</div>
-        </button>
-        <button class="planner-block" data-action="open-df-from-hero">
-          <div class="planner-block-head">
-            <span>Checklist</span>
-            <span class="planner-count">${dfItems.length} item${dfItems.length === 1 ? '' : 's'}</span>
-            <span class="planner-chev">›</span>
-          </div>
-          <div class="planner-block-body">${
-            dfItems.length
-              ? dfItems.slice(0, 3).map(s => `• ${esc(s.replace(/^[•\-\*]\s*/, ''))}`).join('<br>')
-                  + (dfItems.length > 3 ? `<br><span class="muted">+${dfItems.length - 3} more</span>` : '')
-              : '<em>Tap to add packing & check-in items</em>'
-          }</div>
-        </button>
+          <label class="ff-field">
+            <span>Current Shift</span>
+            <select data-roster="shiftType">
+              <option value="day"   ${rShift === 'day'   ? 'selected' : ''}>☀️ Day Shift</option>
+              <option value="night" ${rShift === 'night' ? 'selected' : ''}>🌙 Night Shift</option>
+            </select>
+          </label>
+          <div class="ff-status" id="roster-save-status">Auto-saves & updates the app</div>
+        </form>
       </article>`;
 
-    const cards = [cardCountdown, cardTravel, cardPlanner];
+    const cards = [cardCountdown, cardTravel, cardRoster];
     const carousel = `
       <section class="hero-carousel-wrap" aria-label="Dashboard">
         <div class="hero-carousel" id="hero-carousel" role="region" aria-roledescription="carousel">
@@ -929,10 +922,12 @@
     el.innerHTML = `
       ${carousel}
       ${buildCalendar()}
+      ${buildNotesCard()}
       <div class="alarm-status-row hidden" id="alarm-status-line"></div>`;
 
     renderAlarmStatus();
     setupHeroCarousel();
+    setupNotesCarousel();
   };
 
   /* ──────────────────────────────────────────────────────────
@@ -973,6 +968,261 @@
     const car = $('hero-carousel');
     if (!car) return;
     car.scrollTo({ left: car.clientWidth * idx, behavior: 'smooth' });
+  };
+
+  /* ──────────────────────────────────────────────────────────
+     NOTES CARD (below calendar) — swipe: Notes / Checklist
+     ────────────────────────────────────────────────────────── */
+  const buildNotesCard = () => {
+    const notesText = localStorage.getItem(KEYS.notes) || '';
+    const dfText    = localStorage.getItem(KEYS.dontForget) || '';
+    const voice     = readJSON(KEYS.voice, []);
+    const notesPrev = notesText.trim().slice(0, 140);
+    const dfItems   = dfText.split('\n').map(s => s.trim()).filter(Boolean);
+    const voiceForNotes    = voice.filter(v => v.kind === 'notes').length;
+    const voiceForChecklist= voice.filter(v => v.kind === 'checklist').length;
+
+    const page = (title, kind, preview, count) => `
+      <div class="notes-slide" data-idx="${kind === 'notes' ? 0 : 1}">
+        <article class="hero-card notes-card premium">
+          <div class="hero-glow" aria-hidden="true"></div>
+          <div class="hero-shine" aria-hidden="true"></div>
+          <div class="hero-badge on-site"><span class="hero-badge-dot"></span>${title}</div>
+          <div class="hero-card-title">${title}</div>
+          <div class="notes-preview">${preview}</div>
+          <div class="notes-actions">
+            <button class="notes-btn write" data-action="notes-write" data-kind="${kind}">
+              <span class="nb-icon">✎</span><span>Write</span>
+            </button>
+            <button class="notes-btn mic" data-action="notes-mic" data-kind="${kind}">
+              <span class="nb-icon">🎙</span><span>Mic</span>
+            </button>
+          </div>
+          ${count ? `<div class="notes-voice-count">${count} voice note${count === 1 ? '' : 's'}</div>` : ''}
+        </article>
+      </div>`;
+
+    const notesPage = page(
+      'Notes', 'notes',
+      notesPrev ? esc(notesPrev) + (notesText.length > 140 ? '…' : '') : '<em>Tap Write or Mic to capture a note</em>',
+      voiceForNotes,
+    );
+    const listPage = page(
+      'Checklist', 'checklist',
+      dfItems.length
+        ? dfItems.slice(0, 4).map(s => `• ${esc(s.replace(/^[•\-\*]\s*/, ''))}`).join('<br>')
+          + (dfItems.length > 4 ? `<br><span class="muted">+${dfItems.length - 4} more</span>` : '')
+        : '<em>Tap Write or Mic to add checklist items</em>',
+      voiceForChecklist,
+    );
+
+    return `
+      <section class="notes-carousel-wrap" aria-label="Notes">
+        <div class="notes-carousel hero-carousel" id="notes-carousel" role="region" aria-roledescription="carousel">
+          ${notesPage}${listPage}
+        </div>
+        <div class="hero-dots" id="notes-dots" role="tablist">
+          <button class="hero-dot active" data-action="notes-dot" data-idx="0" aria-label="Notes"></button>
+          <button class="hero-dot" data-action="notes-dot" data-idx="1" aria-label="Checklist"></button>
+        </div>
+      </section>`;
+  };
+
+  const setupNotesCarousel = () => {
+    const car = $('notes-carousel');
+    const dots = $('notes-dots');
+    if (!car || !dots) return;
+    car.scrollLeft = 0;
+    let raf = null;
+    car.addEventListener('scroll', () => {
+      if (raf) cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(() => {
+        const w = car.clientWidth || 1;
+        const idx = Math.round(car.scrollLeft / w);
+        dots.querySelectorAll('.hero-dot').forEach((d, i) => d.classList.toggle('active', i === idx));
+      });
+    }, { passive: true });
+  };
+  const goNotesSlide = (idx) => {
+    const car = $('notes-carousel');
+    if (!car) return;
+    car.scrollTo({ left: car.clientWidth * idx, behavior: 'smooth' });
+  };
+
+  /* ── Auto-save handlers for Travel & Roster inline forms */
+  const saveFlightField = (key, value) => {
+    const cur = readJSON(KEYS.flight, {});
+    if (key === 'from' || key === 'to') value = (value || '').toUpperCase();
+    cur[key] = value;
+    writeJSON(KEYS.flight, cur);
+    const s = $('flight-save-status');
+    if (s) { s.textContent = '✓ Saved'; s.classList.add('ok'); clearTimeout(saveFlightField._t);
+      saveFlightField._t = setTimeout(() => { s.textContent = 'Auto-saves'; s.classList.remove('ok'); }, 1400); }
+  };
+  const saveRosterField = (key, value) => {
+    const cur = loadRoster() || {};
+    if (key === 'daysOn' || key === 'daysOff') value = Math.max(1, parseInt(value, 10) || 1);
+    cur[key] = value;
+    saveRoster(cur);
+    const s = $('roster-save-status');
+    if (s) { s.textContent = '✓ Saved — updating…'; s.classList.add('ok'); }
+    clearTimeout(saveRosterField._t);
+    saveRosterField._t = setTimeout(() => render(), 400);
+  };
+
+  /* ──────────────────────────────────────────────────────────
+     NOTES EDITOR (full-screen) + MIC (speech-to-text or recorder)
+     ────────────────────────────────────────────────────────── */
+  const NOTE_META = {
+    notes:     { key: KEYS.notes,      title: 'Notes' },
+    checklist: { key: KEYS.dontForget, title: 'Checklist' },
+  };
+
+  let editorState = null;
+  const openNoteEditor = (kind) => {
+    const meta = NOTE_META[kind]; if (!meta) return;
+    const val = localStorage.getItem(meta.key) || '';
+    const ph = kind === 'checklist'
+      ? '• Flight check-in\n• Charger\n• Boots\n• Medications'
+      : 'Write anything…';
+    document.body.insertAdjacentHTML('beforeend', `
+      <div class="note-editor" id="note-editor">
+        <div class="ne-head">
+          <button class="ne-back" data-action="close-editor">← Back</button>
+          <div class="ne-title">${meta.title}</div>
+          <div class="ne-status" id="ne-status">Auto-saves</div>
+        </div>
+        <textarea class="ne-ta" id="ne-ta" placeholder="${ph}"></textarea>
+      </div>`);
+    const ta = $('ne-ta');
+    ta.value = val;
+    setTimeout(() => { ta.focus(); }, 50);
+    editorState = { kind };
+    let t = null;
+    ta.addEventListener('input', () => {
+      clearTimeout(t);
+      t = setTimeout(() => {
+        localStorage.setItem(meta.key, ta.value);
+        const s = $('ne-status');
+        if (s) { s.textContent = '✓ Saved'; setTimeout(() => s.textContent = 'Auto-saves', 1200); }
+      }, 400);
+    });
+  };
+  const closeNoteEditor = () => {
+    $('note-editor')?.remove();
+    editorState = null;
+    render();
+  };
+
+  /* Mic — prefer Web Speech Recognition; fallback to MediaRecorder */
+  let recState = null;
+  const openMicOverlay = (kind) => {
+    const meta = NOTE_META[kind]; if (!meta) return;
+    document.body.insertAdjacentHTML('beforeend', `
+      <div class="mic-overlay" id="mic-overlay">
+        <div class="mic-card">
+          <div class="mic-title">${meta.title} — Voice</div>
+          <div class="mic-dot" id="mic-dot"></div>
+          <div class="mic-status" id="mic-status">Preparing…</div>
+          <div class="mic-transcript" id="mic-transcript"></div>
+          <div class="mic-btns">
+            <button class="mic-cancel" data-action="mic-cancel">Cancel</button>
+            <button class="mic-stop" data-action="mic-stop">Stop &amp; Save</button>
+          </div>
+        </div>
+      </div>`);
+    startMic(kind);
+  };
+
+  const startMic = async (kind) => {
+    const status = $('mic-status');
+    const tEl = $('mic-transcript');
+    const dot = $('mic-dot');
+    const meta = NOTE_META[kind];
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+    if (SR) {
+      try {
+        const rec = new SR();
+        rec.lang = 'en-AU';
+        rec.continuous = true;
+        rec.interimResults = true;
+        let finalText = '';
+        rec.onresult = (e) => {
+          let interim = '';
+          for (let i = e.resultIndex; i < e.results.length; i++) {
+            const r = e.results[i];
+            if (r.isFinal) finalText += r[0].transcript + ' ';
+            else interim += r[0].transcript;
+          }
+          tEl.textContent = (finalText + interim).trim();
+        };
+        rec.onerror = () => { status.textContent = 'Speech error — try again'; };
+        rec.onend = () => { dot?.classList.remove('active'); };
+        rec.start();
+        dot?.classList.add('active');
+        status.textContent = '🎙 Listening… speak now';
+        recState = { kind, kind_: 'sr', rec, getText: () => tEl.textContent.trim() };
+        return;
+      } catch { /* fall through */ }
+    }
+    // Fallback: record audio blob and store as data URL
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mr = new MediaRecorder(stream);
+      const chunks = [];
+      mr.ondataavailable = (e) => chunks.push(e.data);
+      mr.start();
+      dot?.classList.add('active');
+      status.textContent = '🎙 Recording… (speech-to-text unavailable)';
+      tEl.textContent = '(Audio will be saved locally)';
+      recState = { kind, kind_: 'rec', mr, stream, chunks, meta };
+    } catch (err) {
+      status.textContent = 'Microphone unavailable';
+    }
+  };
+
+  const stopMicSave = async () => {
+    if (!recState) return closeMicOverlay();
+    const kind = recState.kind;
+    const meta = NOTE_META[kind];
+    if (recState.kind_ === 'sr') {
+      try { recState.rec.stop(); } catch {}
+      const text = recState.getText();
+      if (text) {
+        const existing = localStorage.getItem(meta.key) || '';
+        const stamp = new Date().toLocaleString('en-AU', { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' });
+        const line = kind === 'checklist'
+          ? text.split(/[,;]|\band\b/i).map(s => s.trim()).filter(Boolean).map(s => `• ${s}`).join('\n')
+          : `[${stamp}] ${text}`;
+        localStorage.setItem(meta.key, existing ? `${existing}\n${line}` : line);
+      }
+    } else if (recState.kind_ === 'rec') {
+      const { mr, stream, chunks } = recState;
+      await new Promise((res) => { mr.onstop = res; try { mr.stop(); } catch { res(); } });
+      stream.getTracks().forEach(t => t.stop());
+      if (chunks.length) {
+        const blob = new Blob(chunks, { type: 'audio/webm' });
+        const dataUrl = await new Promise((res) => {
+          const r = new FileReader(); r.onloadend = () => res(r.result); r.readAsDataURL(blob);
+        });
+        const list = readJSON(KEYS.voice, []);
+        list.push({ kind, at: Date.now(), audio: dataUrl });
+        writeJSON(KEYS.voice, list);
+      }
+    }
+    closeMicOverlay();
+  };
+
+  const closeMicOverlay = () => {
+    if (recState) {
+      try { recState.rec?.stop(); } catch {}
+      try { recState.mr?.stop(); } catch {}
+      recState.stream?.getTracks().forEach(t => t.stop());
+    }
+    recState = null;
+    $('mic-overlay')?.remove();
+    render();
   };
 
   const menuBtn = (icon, label, sub, action) => `
@@ -1352,9 +1602,15 @@
     // Hero carousel
     'hero-dot': (t) => goHeroSlide(parseInt(t.dataset.idx, 10)),
     'open-alarm-from-hero': () => { openPanel(); openSubAlarm(); },
-    'open-notes-from-hero': () => { openPanel(); openSubNotes(); },
-    'open-df-from-hero':    () => { openPanel(); openSubDontForget(); },
     'edit-flight':          editFlightDetails,
+
+    // Notes card
+    'notes-dot':   (t) => goNotesSlide(parseInt(t.dataset.idx, 10)),
+    'notes-write': (t) => openNoteEditor(t.dataset.kind),
+    'notes-mic':   (t) => openMicOverlay(t.dataset.kind),
+    'close-editor': closeNoteEditor,
+    'mic-stop':    stopMicSave,
+    'mic-cancel':  closeMicOverlay,
 
     // Roster
     'save-roster':  saveRosterSub,
@@ -1409,6 +1665,12 @@
   document.addEventListener('input', (ev) => {
     const t = ev.target;
     if (t.dataset?.action === 'autosave-text') autosaveText(t.dataset.key, t.dataset.btn, t.id);
+    if (t.dataset?.flight) saveFlightField(t.dataset.flight, t.value);
+    if (t.dataset?.roster) saveRosterField(t.dataset.roster, t.value);
+  });
+  document.addEventListener('change', (ev) => {
+    const t = ev.target;
+    if (t.dataset?.roster) saveRosterField(t.dataset.roster, t.value);
   });
 
   // Calendar swipe nav (left/right) on .cal-grid
