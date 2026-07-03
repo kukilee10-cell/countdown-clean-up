@@ -1,6 +1,6 @@
 {
-  "name": "Journey Home",
-  "short_name": "Journey Home",
+  "name": "Rotation",
+  "short_name": "Rotation",
   "description": "Work today. Home tomorrow. The premium countdown for FIFO workers.",
   "start_url": "./",
   "scope": "./",
