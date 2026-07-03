@@ -320,7 +320,7 @@
   const fireNotification = () => {
     if (!('Notification' in window) || Notification.permission !== 'granted') return;
     try {
-      const n = new Notification('Journey Home', {
+      const n = new Notification('Rotation', {
         body: `Wake up — alarm set for ${fmt12(loadAlarm().time)}`,
         tag: 'fifo-alarm',
         requireInteraction: true,
