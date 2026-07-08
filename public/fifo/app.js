@@ -1626,7 +1626,6 @@
     $('settings-panel').innerHTML = `
       <div class="panel-handle"></div>
       <div class="panel-title alarm-title-premium">Wake-up Alarm</div>
-      <button class="sub-back-btn" data-action="back-to-menu">Back to Settings</button>
       <div class="panel-row alarm-toggle-row">
         <label class="toggle toggle-lg ${a.on ? 'is-on' : 'is-off'}" id="alarm-toggle-wrap">
           <input type="checkbox" id="alarm-toggle" ${a.on ? 'checked' : ''} data-action="toggle-alarm">
