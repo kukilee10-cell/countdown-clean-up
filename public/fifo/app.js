@@ -1341,9 +1341,6 @@
           <div class="hero-glow" aria-hidden="true"></div>
           <div class="hero-shine" aria-hidden="true"></div>
           <div class="rs-swipe-handle" aria-hidden="true"><span></span></div>
-          <button class="rs-back" data-action="close-checklist-sheet" aria-label="Back">
-            <span class="rs-back-chev" aria-hidden="true">‹</span><span>Back</span>
-          </button>
           <div class="hero-badge on-site"><span class="hero-badge-dot"></span>List</div>
           <div class="hero-card-title">List</div>
           <div class="list-items" id="list-items"></div>
