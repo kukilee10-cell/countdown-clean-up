@@ -1092,13 +1092,24 @@
      SETTINGS PANEL
      ────────────────────────────────────────────────────────── */
   const openPanel = () => {
+    const panel = $('settings-panel');
+    if (panel) {
+      panel.style.transform = '';
+      panel.style.transition = '';
+    }
     renderSettingsMenu();
     $('overlay').classList.add('open');
     document.body.style.overflow = 'hidden';
+    window.__panelJustOpenedUntil = Date.now() + 700;
   };
   const closePanel = () => {
     stopAlarmSound();
     $('overlay').classList.remove('open');
+    const panel = $('settings-panel');
+    if (panel) {
+      panel.style.transform = '';
+      panel.style.transition = '';
+    }
     document.body.style.overflow = '';
   };
 
@@ -2083,14 +2094,6 @@
 
   // Click delegation
   document.addEventListener('click', (ev) => {
-    if (window.__suppressAlarmReleaseClickUntil && Date.now() < window.__suppressAlarmReleaseClickUntil) {
-      ev.preventDefault();
-      ev.stopImmediatePropagation();
-      window.__suppressAlarmReleaseClickUntil = 0;
-    }
-  }, true);
-
-  document.addEventListener('click', (ev) => {
     const target = ev.target.closest('[data-action]');
     if (!target) return;
     // Bedtime overlay should only close on its own background, not on its text children
@@ -2102,8 +2105,7 @@
       return;
     }
     // Suppress synthetic click after a long-press on Alarm button
-    if (target.classList?.contains('alarm-btn') && window.__alarmLongPressed) {
-      window.__alarmLongPressed = false;
+    if (target.classList?.contains('alarm-btn') && Date.now() < (window.__alarmTapSuppressedUntil || 0)) {
       ev.preventDefault();
       return;
     }
@@ -2155,8 +2157,7 @@
       clearTimeout(timer);
       timer = setTimeout(() => {
         fired = true;
-        window.__alarmLongPressed = true;
-        window.__suppressAlarmReleaseClickUntil = Date.now() + 900;
+        window.__alarmTapSuppressedUntil = Date.now() + 1000;
         btn.classList.add('longpress-flash');
         setTimeout(() => btn.classList.remove('longpress-flash'), 300);
         openPanel(); openSubAlarm();
@@ -2186,6 +2187,7 @@
 
   // Overlay click-to-close
   document.addEventListener('click', (ev) => {
+    if (Date.now() < (window.__panelJustOpenedUntil || 0)) return;
     if (ev.target.id === 'overlay') closePanel();
   });
 
