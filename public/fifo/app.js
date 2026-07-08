@@ -2083,6 +2083,14 @@
 
   // Click delegation
   document.addEventListener('click', (ev) => {
+    if (window.__suppressAlarmReleaseClickUntil && Date.now() < window.__suppressAlarmReleaseClickUntil) {
+      ev.preventDefault();
+      ev.stopImmediatePropagation();
+      window.__suppressAlarmReleaseClickUntil = 0;
+    }
+  }, true);
+
+  document.addEventListener('click', (ev) => {
     const target = ev.target.closest('[data-action]');
     if (!target) return;
     // Bedtime overlay should only close on its own background, not on its text children
@@ -2136,15 +2144,19 @@
 
   // Long-press on Alarm button → open Alarm settings sheet
   (() => {
-    let timer = null, startX = 0, startY = 0;
+    let timer = null, startX = 0, startY = 0, active = false, fired = false;
     const start = (ev) => {
       const btn = ev.target.closest?.('.alarm-btn');
       if (!btn) return;
+      active = true;
+      fired = false;
       startX = ev.clientX || ev.touches?.[0]?.clientX || 0;
       startY = ev.clientY || ev.touches?.[0]?.clientY || 0;
       clearTimeout(timer);
       timer = setTimeout(() => {
+        fired = true;
         window.__alarmLongPressed = true;
+        window.__suppressAlarmReleaseClickUntil = Date.now() + 900;
         btn.classList.add('longpress-flash');
         setTimeout(() => btn.classList.remove('longpress-flash'), 300);
         openPanel(); openSubAlarm();
@@ -2158,11 +2170,18 @@
         clearTimeout(timer); timer = null;
       }
     };
-    const end = () => { clearTimeout(timer); timer = null; };
+    const end = (ev) => {
+      clearTimeout(timer); timer = null;
+      if (active && fired) {
+        ev.preventDefault?.();
+        ev.stopPropagation?.();
+      }
+      active = false;
+    };
     document.addEventListener('pointerdown', start, { passive: true });
     document.addEventListener('pointermove', move,  { passive: true });
-    document.addEventListener('pointerup', end,     { passive: true });
-    document.addEventListener('pointercancel', end, { passive: true });
+    document.addEventListener('pointerup', end,     { passive: false });
+    document.addEventListener('pointercancel', end, { passive: false });
   })();
 
   // Overlay click-to-close
