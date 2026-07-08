@@ -1288,40 +1288,80 @@
   };
 
   /* ── Checklist Sheet (opened from Notes card ✓ button) */
+  const parseListItems = () => {
+    const raw = localStorage.getItem(KEYS.dontForget) || '';
+    return raw.split('\n').map(line => {
+      const s = line.trim();
+      if (!s) return null;
+      if (/^\[x\]\s*/i.test(s)) return { done: true,  text: s.replace(/^\[x\]\s*/i, '') };
+      if (/^\[ \]\s*/  .test(s)) return { done: false, text: s.replace(/^\[ \]\s*/, '') };
+      return { done: false, text: s.replace(/^[•\-\*]\s*/, '') };
+    }).filter(Boolean);
+  };
+  const serializeListItems = (items) =>
+    items.map(it => `${it.done ? '[x]' : '[ ]'} ${it.text}`).join('\n');
+  const saveListItems = (items) =>
+    localStorage.setItem(KEYS.dontForget, serializeListItems(items));
+
+  let listState = null;
+  const listRowHTML = (it, i) => `
+    <div class="list-row${it.done ? ' done' : ''}" data-idx="${i}">
+      <button class="list-tick" data-action="list-toggle" data-idx="${i}" aria-label="Toggle done" aria-pressed="${it.done ? 'true' : 'false'}">
+        <span class="list-tick-check" aria-hidden="true">✓</span>
+      </button>
+      <input class="list-input" data-idx="${i}" type="text" value="${esc(it.text)}" placeholder="List item" autocomplete="off" autocapitalize="sentences" />
+      <button class="list-del" data-action="list-remove" data-idx="${i}" aria-label="Remove item" tabindex="-1">×</button>
+    </div>`;
+  const listNewRowHTML = (i) => `
+    <div class="list-row new-row" data-idx="${i}">
+      <span class="list-tick placeholder" aria-hidden="true"><span class="list-tick-plus">＋</span></span>
+      <input class="list-input" data-idx="${i}" data-new="1" type="text" value="" placeholder="Add item…" autocomplete="off" autocapitalize="sentences" />
+    </div>`;
+  const renderListItems = () => {
+    const wrap = $('list-items');
+    if (!wrap || !listState) return;
+    const its = listState.items;
+    wrap.innerHTML =
+      its.map((it, i) => listRowHTML(it, i)).join('') +
+      listNewRowHTML(its.length);
+  };
+  const focusListItem = (idx, atEnd = true) => {
+    const inp = document.querySelector(`.list-input[data-idx="${idx}"]`);
+    if (!inp) return;
+    inp.focus();
+    if (atEnd) { try { inp.setSelectionRange(inp.value.length, inp.value.length); } catch {} }
+  };
+
   const openChecklistSheet = () => {
-    const dfText = localStorage.getItem(KEYS.dontForget) || '';
-    const dfItems = dfText.split('\n').map(s => s.trim()).filter(Boolean);
-    const voice = readJSON(KEYS.voice, []);
-    const voiceForChecklist = voice.filter(v => v.kind === 'checklist').length;
-    const preview = dfItems.length
-      ? dfItems.slice(0, 8).map(s => `• ${esc(s.replace(/^[•\-\*]\s*/, ''))}`).join('<br>')
-        + (dfItems.length > 8 ? `<br><span class="muted">+${dfItems.length - 8} more</span>` : '')
-      : '<em>Tap Write or Mic to add checklist items</em>';
+    listState = { items: parseListItems() };
     document.body.insertAdjacentHTML('beforeend', `
-      <div class="roster-sheet" id="checklist-sheet">
+      <div class="roster-sheet list-sheet" id="checklist-sheet">
         <div class="rs-backdrop" data-action="close-checklist-sheet"></div>
-        <div class="rs-card hero-card notes-card premium" role="dialog" aria-modal="true" aria-label="Checklist">
+        <div class="rs-card hero-card notes-card premium list-card" role="dialog" aria-modal="true" aria-label="List">
           <div class="hero-glow" aria-hidden="true"></div>
           <div class="hero-shine" aria-hidden="true"></div>
-          <button class="rs-close" data-action="close-checklist-sheet" aria-label="Close">✕</button>
-          <div class="hero-badge on-site"><span class="hero-badge-dot"></span>Checklist</div>
-          <div class="hero-card-title">Checklist</div>
-          <div class="notes-preview">${preview}</div>
-          <div class="notes-actions">
-            <button class="notes-btn write" data-action="notes-write" data-kind="checklist">
-              <span class="nb-icon">✎</span><span>Write</span>
-            </button>
+          <div class="rs-swipe-handle" aria-hidden="true"><span></span></div>
+          <button class="rs-back" data-action="close-checklist-sheet" aria-label="Back">
+            <span class="rs-back-chev" aria-hidden="true">‹</span><span>Back</span>
+          </button>
+          <div class="hero-badge on-site"><span class="hero-badge-dot"></span>List</div>
+          <div class="hero-card-title">List</div>
+          <div class="list-items" id="list-items"></div>
+          <div class="list-actions">
             <button class="notes-btn mic" data-action="notes-mic" data-kind="checklist">
-              <span class="nb-icon">🎙</span><span>Mic</span>
+              <span class="nb-icon">🎙</span><span>Voice add</span>
             </button>
           </div>
-          ${voiceForChecklist ? `<div class="notes-voice-count">${voiceForChecklist} voice note${voiceForChecklist === 1 ? '' : 's'}</div>` : ''}
         </div>
       </div>`);
+    renderListItems();
+    const card = document.querySelector('#checklist-sheet .rs-card');
+    if (card) attachSwipeDown(card, closeChecklistSheet);
     document.body.style.overflow = 'hidden';
   };
   const closeChecklistSheet = () => {
     $('checklist-sheet')?.remove();
+    listState = null;
     document.body.style.overflow = '';
     render();
   };
