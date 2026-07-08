@@ -1341,9 +1341,6 @@
           <div class="hero-glow" aria-hidden="true"></div>
           <div class="hero-shine" aria-hidden="true"></div>
           <div class="rs-swipe-handle" aria-hidden="true"><span></span></div>
-          <button class="rs-back" data-action="close-checklist-sheet" aria-label="Back">
-            <span class="rs-back-chev" aria-hidden="true">‹</span><span>Back</span>
-          </button>
           <div class="hero-badge on-site"><span class="hero-badge-dot"></span>List</div>
           <div class="hero-card-title">List</div>
           <div class="list-items" id="list-items"></div>
@@ -1629,7 +1626,6 @@
     $('settings-panel').innerHTML = `
       <div class="panel-handle"></div>
       <div class="panel-title alarm-title-premium">Wake-up Alarm</div>
-      <button class="sub-back-btn" data-action="back-to-menu">Back to Settings</button>
       <div class="panel-row alarm-toggle-row">
         <label class="toggle toggle-lg ${a.on ? 'is-on' : 'is-off'}" id="alarm-toggle-wrap">
           <input type="checkbox" id="alarm-toggle" ${a.on ? 'checked' : ''} data-action="toggle-alarm">

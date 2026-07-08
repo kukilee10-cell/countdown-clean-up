@@ -160,6 +160,12 @@ header {
 .logo span { color: var(--muted); }
 
 .settings-btn {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+  touch-action: manipulation;
+}
+.settings-btn {
   background: var(--card); border: 1px solid var(--border); color: var(--text);
   border-radius: 10px; padding: 11px 14px;
   font-family: var(--sans); font-size: 14px; font-weight: 600;
@@ -2341,12 +2347,12 @@ input::-webkit-outer-spin-button { -webkit-appearance: none; }
   z-index: 3;
 }
 .roster-sheet .rs-swipe-handle span {
-  width: 44px; height: 5px; border-radius: 999px;
+  width: 32px; height: 4px; border-radius: 999px;
   background: rgba(255,255,255,0.22);
   box-shadow: 0 0 0 1px rgba(255,255,255,0.04);
   transition: background .2s ease, width .2s ease;
 }
-.roster-sheet .rs-swipe-handle:active span { background: rgba(255,255,255,0.45); width: 56px; }
+.roster-sheet .rs-swipe-handle:active span { background: rgba(255,255,255,0.45); width: 40px; }
 
 .roster-sheet .rs-back {
   position: absolute; top: 22px; left: 14px; z-index: 3;
