@@ -2174,6 +2174,110 @@
     if (ev.target.id === 'overlay') closePanel();
   });
 
+  // ── List (Checklist) sheet: input + keyboard behaviour
+  document.addEventListener('input', (ev) => {
+    const t = ev.target;
+    if (!t.classList || !t.classList.contains('list-input') || !listState) return;
+    if (t.dataset.new === '1') {
+      const val = t.value;
+      if (!val) return;
+      // Promote the "new" row into a real item and re-render
+      listState.items.push({ text: val, done: false });
+      saveListItems(listState.items);
+      renderListItems();
+      focusListItem(listState.items.length - 1);
+      return;
+    }
+    const idx = parseInt(t.dataset.idx, 10);
+    if (!listState.items[idx]) return;
+    listState.items[idx].text = t.value;
+    saveListItems(listState.items);
+  });
+
+  document.addEventListener('keydown', (ev) => {
+    const t = ev.target;
+    if (!t.classList || !t.classList.contains('list-input') || !listState) return;
+    if (ev.key === 'Enter') {
+      ev.preventDefault();
+      const isNew = t.dataset.new === '1';
+      if (isNew) {
+        // If user hit Enter on an empty new row, just close keyboard
+        if (!t.value) { t.blur(); return; }
+        // Value already promoted via input handler; append a fresh empty item
+        listState.items.push({ text: '', done: false });
+        saveListItems(listState.items);
+        renderListItems();
+        focusListItem(listState.items.length - 1);
+        return;
+      }
+      const idx = parseInt(t.dataset.idx, 10);
+      listState.items.splice(idx + 1, 0, { text: '', done: false });
+      saveListItems(listState.items);
+      renderListItems();
+      focusListItem(idx + 1);
+    } else if (ev.key === 'Backspace' && !t.value) {
+      const isNew = t.dataset.new === '1';
+      if (isNew) return;
+      const idx = parseInt(t.dataset.idx, 10);
+      if (!listState.items[idx]) return;
+      ev.preventDefault();
+      listState.items.splice(idx, 1);
+      saveListItems(listState.items);
+      renderListItems();
+      focusListItem(Math.max(0, idx - 1));
+    }
+  });
+
+  // ── Swipe-down-to-close for bottom sheets
+  function attachSwipeDown(card, onClose) {
+    let startY = 0, curY = 0, dragging = false, allowed = false;
+    const onStart = (e) => {
+      const touch = e.touches ? e.touches[0] : e;
+      // Only start a drag if the gesture originates on the handle,
+      // the card's own padding, or the title area — never on an input/textarea/button.
+      const tgt = e.target;
+      const onHandle = !!tgt.closest?.('.rs-swipe-handle, .panel-handle');
+      const onControl = !!tgt.closest?.('input, textarea, select, button, .list-row');
+      allowed = onHandle || !onControl;
+      if (!allowed) return;
+      startY = touch.clientY;
+      curY = startY;
+      dragging = true;
+      card.style.transition = 'none';
+    };
+    const onMove = (e) => {
+      if (!dragging) return;
+      const touch = e.touches ? e.touches[0] : e;
+      curY = touch.clientY;
+      const dy = Math.max(0, curY - startY);
+      if (dy > 0) card.style.transform = `translateY(${dy}px)`;
+    };
+    const onEnd = () => {
+      if (!dragging) return;
+      dragging = false;
+      card.style.transition = '';
+      const dy = curY - startY;
+      if (dy > 90) {
+        card.style.transform = `translateY(100%)`;
+        setTimeout(onClose, 180);
+      } else {
+        card.style.transform = '';
+      }
+    };
+    card.addEventListener('touchstart', onStart, { passive: true });
+    card.addEventListener('touchmove',  onMove,  { passive: true });
+    card.addEventListener('touchend',   onEnd);
+    card.addEventListener('touchcancel', onEnd);
+  }
+  // Expose for other openers
+  window.__attachSwipeDown = attachSwipeDown;
+
+  // Attach swipe-down to the settings overlay panel (uses .panel-handle)
+  (() => {
+    const panel = document.getElementById('settings-panel');
+    if (panel) attachSwipeDown(panel, closePanel);
+  })();
+
   // Toggle / change events
   document.addEventListener('change', (ev) => {
     const t = ev.target;
