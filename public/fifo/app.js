@@ -2033,6 +2033,25 @@
     'open-checklist-sheet': openChecklistSheet,
     'close-checklist-sheet': closeChecklistSheet,
 
+    // List (checklist) row actions
+    'list-toggle': (t) => {
+      if (!listState) return;
+      const idx = parseInt(t.dataset.idx, 10);
+      if (!listState.items[idx]) return;
+      listState.items[idx].done = !listState.items[idx].done;
+      saveListItems(listState.items);
+      renderListItems();
+    },
+    'list-remove': (t) => {
+      if (!listState) return;
+      const idx = parseInt(t.dataset.idx, 10);
+      if (isNaN(idx) || !listState.items[idx]) return;
+      listState.items.splice(idx, 1);
+      saveListItems(listState.items);
+      renderListItems();
+      focusListItem(Math.max(0, idx - 1));
+    },
+
     // Notes card
     'notes-dot':   (t) => goNotesSlide(parseInt(t.dataset.idx, 10)),
     'notes-write': (t) => openNoteEditor(t.dataset.kind),
