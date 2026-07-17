@@ -972,16 +972,16 @@
           <span class="hero-badge-dot"></span>Flight Details
         </div>
         <div class="hero-card-title">Travel</div>
-
+        ${travelQuickActionsHTML(flight)}
         <form class="flight-form" data-action="noop" onsubmit="return false;">
           <div class="ff-row two">
             <label class="ff-field">
               <span>Airline</span>
-              <input type="text" data-flight="airline" value="${fv('airline')}" placeholder="Qantas">
+              <input type="text" data-flight="airline" value="${fv('airline')}" placeholder="Qantas" list="dl-airlines" autocomplete="off">
             </label>
             <label class="ff-field">
               <span>Flight No.</span>
-              <input type="text" data-flight="number" value="${fv('number')}" placeholder="QF123" class="mono">
+              <input type="text" data-flight="number" value="${fv('number')}" placeholder="QF123" class="mono" list="dl-flight-numbers" autocomplete="off">
             </label>
           </div>
           <div class="ff-row two">
@@ -1007,11 +1007,11 @@
           <div class="ff-row two">
             <label class="ff-field">
               <span>From</span>
-              <input type="text" data-flight="from" value="${fv('from')}" placeholder="PER" maxlength="4" class="mono up">
+              <input type="text" data-flight="from" value="${fv('from')}" placeholder="PER" maxlength="4" class="mono up" list="dl-airports-from" autocomplete="off">
             </label>
             <label class="ff-field">
               <span>To</span>
-              <input type="text" data-flight="to" value="${fv('to')}" placeholder="SYD" maxlength="4" class="mono up">
+              <input type="text" data-flight="to" value="${fv('to')}" placeholder="SYD" maxlength="4" class="mono up" list="dl-airports-to" autocomplete="off">
             </label>
           </div>
           <div class="ff-row two">
@@ -1026,6 +1026,7 @@
           </div>
           <div class="ff-status" id="flight-save-status">Auto-saves</div>
         </form>
+        ${travelDatalistsHTML(flight)}
       </article>`;
 
     // --- Card 3: Roster & Shift ---
