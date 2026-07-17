@@ -19,6 +19,36 @@
     voice:      'fifo_voice_notes_v1',
   };
 
+  // ── Travel card helper storage keys (local only)
+  const TRAVEL_KEYS = {
+    history:  'fifo_flight_history_v1',
+    routes:   'fifo_flight_routes_v1',
+    airlines: 'fifo_flight_airlines_v1',
+    numbers:  'fifo_flight_numbers_v1',
+  };
+
+  // ── Australian airports (code + city) for autocomplete
+  const AU_AIRPORTS = [
+    ['BNE','Brisbane'],['SYD','Sydney'],['MEL','Melbourne'],['PER','Perth'],
+    ['ADL','Adelaide'],['CBR','Canberra'],['HBA','Hobart'],['DRW','Darwin'],
+    ['OOL','Gold Coast'],['CNS','Cairns'],['TSV','Townsville'],['MKY','Mackay'],
+    ['ROK','Rockhampton'],['MOV','Moranbah'],['EMD','Emerald'],['BME','Broome'],
+    ['KTA','Karratha'],['PHE','Port Hedland'],['NWM','Newman'],['LST','Launceston'],
+    ['MCY','Sunshine Coast'],['HTI','Hamilton Island'],['PPP','Proserpine'],
+    ['ISA','Mount Isa'],['LRE','Longreach'],['BDB','Bundaberg'],['HVB','Hervey Bay'],
+    ['GLT','Gladstone'],['ABX','Albury'],['AVV','Avalon'],['BHQ','Broken Hill'],
+    ['CFS','Coffs Harbour'],['DBO','Dubbo'],['GET','Geraldton'],['KGI','Kalgoorlie'],
+    ['LDH','Lord Howe Island'],['MGB','Mount Gambier'],['NTL','Newcastle'],
+    ['NLK','Norfolk Island'],['PLO','Port Lincoln'],['PQQ','Port Macquarie'],
+    ['TMW','Tamworth'],['WGA','Wagga Wagga'],['WYA','Whyalla'],['BQB','Busselton'],
+    ['ARM','Armidale'],['AYQ','Uluru (Ayers Rock)'],['ASP','Alice Springs'],
+    ['BLT','Blackwater'],['CTL','Charleville'],['CMA','Cunnamulla'],['GEX','Geelong'],
+    ['HID','Horn Island'],['KNS','King Island'],['NRA','Narrandera'],['OLP','Olympic Dam'],
+    ['PBO','Paraburdoo'],['DPO','Devonport'],['XCH','Christmas Island'],
+    ['BWT','Burnie'],['MIM','Merimbula'],['LSY','Lismore'],['BNK','Ballina'],
+    ['GFF','Griffith'],['ORS','Orange'],['PKE','Parkes'],['CCK','Cocos Islands'],
+  ];
+
   // ── tiny DOM helpers
   const $ = (id) => document.getElementById(id);
   const esc = (s) => String(s).replace(/[&<>"']/g, (c) => (
@@ -942,16 +972,16 @@
           <span class="hero-badge-dot"></span>Flight Details
         </div>
         <div class="hero-card-title">Travel</div>
-
+        ${travelQuickActionsHTML(flight)}
         <form class="flight-form" data-action="noop" onsubmit="return false;">
           <div class="ff-row two">
             <label class="ff-field">
               <span>Airline</span>
-              <input type="text" data-flight="airline" value="${fv('airline')}" placeholder="Qantas">
+              <input type="text" data-flight="airline" value="${fv('airline')}" placeholder="Qantas" list="dl-airlines" autocomplete="off">
             </label>
             <label class="ff-field">
               <span>Flight No.</span>
-              <input type="text" data-flight="number" value="${fv('number')}" placeholder="QF123" class="mono">
+              <input type="text" data-flight="number" value="${fv('number')}" placeholder="QF123" class="mono" list="dl-flight-numbers" autocomplete="off">
             </label>
           </div>
           <div class="ff-row two">
@@ -977,11 +1007,11 @@
           <div class="ff-row two">
             <label class="ff-field">
               <span>From</span>
-              <input type="text" data-flight="from" value="${fv('from')}" placeholder="PER" maxlength="4" class="mono up">
+              <input type="text" data-flight="from" value="${fv('from')}" placeholder="PER" maxlength="4" class="mono up" list="dl-airports-from" autocomplete="off">
             </label>
             <label class="ff-field">
               <span>To</span>
-              <input type="text" data-flight="to" value="${fv('to')}" placeholder="SYD" maxlength="4" class="mono up">
+              <input type="text" data-flight="to" value="${fv('to')}" placeholder="SYD" maxlength="4" class="mono up" list="dl-airports-to" autocomplete="off">
             </label>
           </div>
           <div class="ff-row two">
@@ -996,6 +1026,7 @@
           </div>
           <div class="ff-status" id="flight-save-status">Auto-saves</div>
         </form>
+        ${travelDatalistsHTML(flight)}
       </article>`;
 
     // --- Card 3: Roster & Shift ---
@@ -1230,6 +1261,7 @@
     const s = $('flight-save-status');
     if (s) { s.textContent = '✓ Saved'; s.classList.add('ok'); clearTimeout(saveFlightField._t);
       saveFlightField._t = setTimeout(() => { s.textContent = 'Auto-saves'; s.classList.remove('ok'); }, 1400); }
+    scheduleFlightSnapshot();
   };
   const saveRosterField = (key, value) => {
     const cur = loadRoster() || {};
@@ -1983,6 +2015,143 @@
     render();
   };
 
+  /* ──────────────────────────────────────────────────────────
+     TRAVEL CARD: recent flights, favourite routes, autocomplete
+     ────────────────────────────────────────────────────────── */
+  const FLIGHT_FIELDS = ['airline','number','checkin','time','terminal','gate','from','to'];
+  const flightIsMeaningful = (f) =>
+    f && (f.airline || f.number || f.from || f.to);
+  const flightsEqual = (a, b) =>
+    FLIGHT_FIELDS.every(k => (a?.[k] || '') === (b?.[k] || ''));
+
+  const commitFlightSnapshot = () => {
+    const cur = readJSON(KEYS.flight, {});
+    if (!flightIsMeaningful(cur)) return;
+    const hist = readJSON(TRAVEL_KEYS.history, []);
+    if (hist.length && flightsEqual(hist[hist.length - 1], cur)) return;
+    const snap = {};
+    FLIGHT_FIELDS.forEach(k => { if (cur[k]) snap[k] = cur[k]; });
+    const filtered = hist.filter(h => !flightsEqual(h, snap));
+    filtered.push(snap);
+    while (filtered.length > 15) filtered.shift();
+    writeJSON(TRAVEL_KEYS.history, filtered);
+
+    if (cur.airline) {
+      const airlines = readJSON(TRAVEL_KEYS.airlines, [])
+        .filter(a => a.toLowerCase() !== cur.airline.toLowerCase());
+      airlines.push(cur.airline);
+      while (airlines.length > 12) airlines.shift();
+      writeJSON(TRAVEL_KEYS.airlines, airlines);
+    }
+    if (cur.number) {
+      const nums = readJSON(TRAVEL_KEYS.numbers, [])
+        .filter(n => n.toLowerCase() !== cur.number.toLowerCase());
+      nums.push(cur.number);
+      while (nums.length > 15) nums.shift();
+      writeJSON(TRAVEL_KEYS.numbers, nums);
+    }
+  };
+  let _flightSnapTimer = null;
+  const scheduleFlightSnapshot = () => {
+    clearTimeout(_flightSnapTimer);
+    _flightSnapTimer = setTimeout(commitFlightSnapshot, 2500);
+  };
+
+  const usePreviousFlight = () => {
+    // Ensure the latest edits are captured before pulling "previous"
+    clearTimeout(_flightSnapTimer);
+    commitFlightSnapshot();
+    const hist = readJSON(TRAVEL_KEYS.history, []);
+    const cur = readJSON(KEYS.flight, {});
+    let prev = null;
+    for (let i = hist.length - 1; i >= 0; i--) {
+      if (!flightsEqual(hist[i], cur)) { prev = hist[i]; break; }
+    }
+    if (!prev && hist.length) prev = hist[hist.length - 1];
+    if (!prev) return;
+    const merged = { ...cur };
+    FLIGHT_FIELDS.forEach(k => { merged[k] = prev[k] || ''; });
+    writeJSON(KEYS.flight, merged);
+    render();
+  };
+
+  const routeKey = (r) => `${(r.from||'').toUpperCase()}→${(r.to||'').toUpperCase()}`;
+  const toggleFavouriteRoute = () => {
+    const cur = readJSON(KEYS.flight, {});
+    const from = (cur.from || '').toUpperCase();
+    const to   = (cur.to || '').toUpperCase();
+    if (!from || !to) return;
+    const list = readJSON(TRAVEL_KEYS.routes, []);
+    const k = routeKey({ from, to });
+    const idx = list.findIndex(r => routeKey(r) === k);
+    if (idx >= 0) list.splice(idx, 1);
+    else list.push({ from, to });
+    writeJSON(TRAVEL_KEYS.routes, list);
+    render();
+  };
+
+  const travelQuickActionsHTML = (flight) => {
+    const hist = readJSON(TRAVEL_KEYS.history, []);
+    const cur  = flight || {};
+    const hasPrev = hist.some(h => !flightsEqual(h, cur));
+    const routes = readJSON(TRAVEL_KEYS.routes, []);
+    const from = (cur.from || '').toUpperCase();
+    const to   = (cur.to || '').toUpperCase();
+    const isFav = !!(from && to && routes.some(r => routeKey(r) === routeKey({ from, to })));
+    return `
+      <div class="travel-quick-actions">
+        <button type="button" class="tqa-btn" data-action="use-previous-flight"
+                ${hasPrev ? '' : 'disabled aria-disabled="true"'} title="Use most recent flight">
+          <span aria-hidden="true">↺</span> Use Previous
+        </button>
+        <button type="button" class="tqa-btn${isFav ? ' active' : ''}" data-action="toggle-fav-route"
+                ${(from && to) ? '' : 'disabled aria-disabled="true"'}
+                title="${isFav ? 'Remove route from favourites' : 'Save route to favourites'}">
+          <span aria-hidden="true">${isFav ? '★' : '☆'}</span> ${isFav ? 'Saved' : 'Save Route'}
+        </button>
+      </div>`;
+  };
+
+  const travelDatalistsHTML = (flight) => {
+    const routes  = readJSON(TRAVEL_KEYS.routes, []);
+    const hist    = readJSON(TRAVEL_KEYS.history, []);
+    const airlines= readJSON(TRAVEL_KEYS.airlines, []);
+    const numbers = readJSON(TRAVEL_KEYS.numbers,  []);
+    const airportLabel = (code) => {
+      const hit = AU_AIRPORTS.find(a => a[0] === code);
+      return hit ? hit[1] : code;
+    };
+    const uniq = (arr) => Array.from(new Set(arr.filter(Boolean)));
+    const favFromCodes = uniq(routes.map(r => r.from));
+    const favToCodes   = uniq(routes.map(r => r.to));
+    const recentFrom   = uniq(hist.map(h => (h.from || '').toUpperCase()));
+    const recentTo     = uniq(hist.map(h => (h.to   || '').toUpperCase()));
+    const buildAirports = (favCodes, recentCodes) => {
+      const seen = new Set();
+      const push = (code, label) => {
+        if (!code) return '';
+        const u = code.toUpperCase();
+        if (seen.has(u)) return '';
+        seen.add(u);
+        return `<option value="${esc(u)}" label="${esc(label)}"></option>`;
+      };
+      const parts = [];
+      favCodes.forEach(c => parts.push(push(c, `★ ${airportLabel(c)}`)));
+      recentCodes.forEach(c => parts.push(push(c, `Recent — ${airportLabel(c)}`)));
+      AU_AIRPORTS.forEach(([c, city]) => parts.push(push(c, city)));
+      return parts.join('');
+    };
+    const airlineOpts = uniq(airlines).reverse()
+      .map(a => `<option value="${esc(a)}"></option>`).join('');
+    const numberOpts  = uniq(numbers).reverse()
+      .map(n => `<option value="${esc(n)}"></option>`).join('');
+    return `
+      <datalist id="dl-airports-from">${buildAirports(favFromCodes, recentFrom)}</datalist>
+      <datalist id="dl-airports-to">${buildAirports(favToCodes, recentTo)}</datalist>
+      <datalist id="dl-airlines">${airlineOpts}</datalist>
+      <datalist id="dl-flight-numbers">${numberOpts}</datalist>`;
+  };
+
   const showPanelMsg = (msg) => {
     document.getElementById('_panel_err')?.remove();
     const d = document.createElement('div');
@@ -2034,6 +2203,8 @@
     'hero-dot': (t) => goHeroSlide(parseInt(t.dataset.idx, 10)),
     'open-alarm-from-hero': () => { openPanel(); openSubAlarm(); },
     'edit-flight':          editFlightDetails,
+    'use-previous-flight':  usePreviousFlight,
+    'toggle-fav-route':     toggleFavouriteRoute,
     'hero-save-roster':     heroSaveRoster,
     'open-roster-sheet':    openRosterSheet,
     'close-roster-sheet':   closeRosterSheet,

@@ -646,6 +646,37 @@ main {
 }
 .travel-card.premium > * { position: relative; z-index: 2; }
 
+/* Travel quick actions — subtle inline row (no layout shift) */
+.travel-card.premium .travel-quick-actions {
+  display: flex; gap: 8px; flex-wrap: wrap;
+  margin: 6px 0 -4px;
+  position: relative; z-index: 3;
+}
+.travel-card.premium .tqa-btn {
+  appearance: none; -webkit-appearance: none;
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 4px 9px; border-radius: 999px;
+  font-family: var(--mono); font-size: 10px; font-weight: 600;
+  letter-spacing: 0.06em; text-transform: uppercase;
+  color: rgba(255,255,255,0.72);
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.10);
+  cursor: pointer;
+  transition: background 160ms ease, color 160ms ease, border-color 160ms ease, transform 120ms ease;
+}
+.travel-card.premium .tqa-btn:hover:not(:disabled) {
+  color: #fff;
+  background: rgba(255,255,255,0.08);
+  border-color: rgba(255,255,255,0.18);
+}
+.travel-card.premium .tqa-btn:active:not(:disabled) { transform: scale(0.97); }
+.travel-card.premium .tqa-btn:disabled { opacity: 0.35; cursor: default; }
+.travel-card.premium .tqa-btn.active {
+  color: var(--accent);
+  background: rgba(245,166,35,0.12);
+  border-color: rgba(245,166,35,0.32);
+}
+
 /* Floating status pill (reuses .hero-badge styles from Card 1 look) */
 .travel-card.premium .hero-badge {
   position: absolute; top: 16px; right: 16px; z-index: 3;
