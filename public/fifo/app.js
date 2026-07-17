@@ -2202,6 +2202,8 @@
     'hero-dot': (t) => goHeroSlide(parseInt(t.dataset.idx, 10)),
     'open-alarm-from-hero': () => { openPanel(); openSubAlarm(); },
     'edit-flight':          editFlightDetails,
+    'use-previous-flight':  usePreviousFlight,
+    'toggle-fav-route':     toggleFavouriteRoute,
     'hero-save-roster':     heroSaveRoster,
     'open-roster-sheet':    openRosterSheet,
     'close-roster-sheet':   closeRosterSheet,
