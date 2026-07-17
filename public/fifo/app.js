@@ -1261,6 +1261,7 @@
     const s = $('flight-save-status');
     if (s) { s.textContent = '✓ Saved'; s.classList.add('ok'); clearTimeout(saveFlightField._t);
       saveFlightField._t = setTimeout(() => { s.textContent = 'Auto-saves'; s.classList.remove('ok'); }, 1400); }
+    scheduleFlightSnapshot();
   };
   const saveRosterField = (key, value) => {
     const cur = loadRoster() || {};
