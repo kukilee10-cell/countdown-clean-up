@@ -19,6 +19,36 @@
     voice:      'fifo_voice_notes_v1',
   };
 
+  // ── Travel card helper storage keys (local only)
+  const TRAVEL_KEYS = {
+    history:  'fifo_flight_history_v1',
+    routes:   'fifo_flight_routes_v1',
+    airlines: 'fifo_flight_airlines_v1',
+    numbers:  'fifo_flight_numbers_v1',
+  };
+
+  // ── Australian airports (code + city) for autocomplete
+  const AU_AIRPORTS = [
+    ['BNE','Brisbane'],['SYD','Sydney'],['MEL','Melbourne'],['PER','Perth'],
+    ['ADL','Adelaide'],['CBR','Canberra'],['HBA','Hobart'],['DRW','Darwin'],
+    ['OOL','Gold Coast'],['CNS','Cairns'],['TSV','Townsville'],['MKY','Mackay'],
+    ['ROK','Rockhampton'],['MOV','Moranbah'],['EMD','Emerald'],['BME','Broome'],
+    ['KTA','Karratha'],['PHE','Port Hedland'],['NWM','Newman'],['LST','Launceston'],
+    ['MCY','Sunshine Coast'],['HTI','Hamilton Island'],['PPP','Proserpine'],
+    ['ISA','Mount Isa'],['LRE','Longreach'],['BDB','Bundaberg'],['HVB','Hervey Bay'],
+    ['GLT','Gladstone'],['ABX','Albury'],['AVV','Avalon'],['BHQ','Broken Hill'],
+    ['CFS','Coffs Harbour'],['DBO','Dubbo'],['GET','Geraldton'],['KGI','Kalgoorlie'],
+    ['LDH','Lord Howe Island'],['MGB','Mount Gambier'],['NTL','Newcastle'],
+    ['NLK','Norfolk Island'],['PLO','Port Lincoln'],['PQQ','Port Macquarie'],
+    ['TMW','Tamworth'],['WGA','Wagga Wagga'],['WYA','Whyalla'],['BQB','Busselton'],
+    ['ARM','Armidale'],['AYQ','Uluru (Ayers Rock)'],['ASP','Alice Springs'],
+    ['BLT','Blackwater'],['CTL','Charleville'],['CMA','Cunnamulla'],['GEX','Geelong'],
+    ['HID','Horn Island'],['KNS','King Island'],['NRA','Narrandera'],['OLP','Olympic Dam'],
+    ['PBO','Paraburdoo'],['DPO','Devonport'],['XCH','Christmas Island'],
+    ['BWT','Burnie'],['MIM','Merimbula'],['LSY','Lismore'],['BNK','Ballina'],
+    ['GFF','Griffith'],['ORS','Orange'],['PKE','Parkes'],['CCK','Cocos Islands'],
+  ];
+
   // ── tiny DOM helpers
   const $ = (id) => document.getElementById(id);
   const esc = (s) => String(s).replace(/[&<>"']/g, (c) => (
