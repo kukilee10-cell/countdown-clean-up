@@ -2093,23 +2093,26 @@
   };
 
   const travelQuickActionsHTML = (flight) => {
-    const hist = readJSON(TRAVEL_KEYS.history, []);
     const cur  = flight || {};
-    const hasPrev = hist.some(h => !flightsEqual(h, cur));
-    const routes = readJSON(TRAVEL_KEYS.routes, []);
-    const from = (cur.from || '').toUpperCase();
-    const to   = (cur.to || '').toUpperCase();
-    const isFav = !!(from && to && routes.some(r => routeKey(r) === routeKey({ from, to })));
+    const saved = readJSON(TRAVEL_KEYS.saved, []);
+    const hasSaved = saved.length > 0;
+    const canSave = flightIsMeaningful(cur);
+    const isDupe  = canSave && saved.some(s => flightsEqual(s, cur));
+    const hasPass = !!localStorage.getItem(TRAVEL_KEYS.boarding);
     return `
       <div class="travel-quick-actions">
-        <button type="button" class="tqa-btn" data-action="use-previous-flight"
-                ${hasPrev ? '' : 'disabled aria-disabled="true"'} title="Use most recent flight">
-          <span aria-hidden="true">↺</span> Use Previous
+        <button type="button" class="tqa-btn" data-action="open-saved-flights"
+                ${hasSaved ? '' : 'disabled aria-disabled="true"'} title="Use a saved flight">
+          <span aria-hidden="true">↺</span> Use Previous${hasSaved ? ` (${saved.length})` : ''}
         </button>
-        <button type="button" class="tqa-btn${isFav ? ' active' : ''}" data-action="toggle-fav-route"
-                ${(from && to) ? '' : 'disabled aria-disabled="true"'}
-                title="${isFav ? 'Remove route from favourites' : 'Save route to favourites'}">
-          <span aria-hidden="true">${isFav ? '★' : '☆'}</span> ${isFav ? 'Saved' : 'Save Route'}
+        <button type="button" class="tqa-btn${isDupe ? ' active' : ''}" data-action="save-flight-entry"
+                ${(canSave && !isDupe) ? '' : 'disabled aria-disabled="true"'}
+                title="${isDupe ? 'Already saved' : 'Save these flight details'}">
+          <span aria-hidden="true">${isDupe ? '★' : '☆'}</span> ${isDupe ? 'Saved' : 'Save Route'}
+        </button>
+        <button type="button" class="tqa-btn${hasPass ? ' active' : ''}" data-action="open-boarding-pass"
+                title="${hasPass ? 'View boarding pass' : 'Add boarding pass image'}">
+          <span aria-hidden="true">＋</span> Boarding Pass
         </button>
       </div>`;
   };
