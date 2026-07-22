@@ -25,6 +25,8 @@
     routes:   'fifo_flight_routes_v1',
     airlines: 'fifo_flight_airlines_v1',
     numbers:  'fifo_flight_numbers_v1',
+    saved:    'fifo_flight_saved_v1',
+    boarding: 'fifo_boarding_pass_v1',
   };
 
   // ── Australian airports (code + city) for autocomplete
@@ -2090,24 +2092,187 @@
     render();
   };
 
+  /* ── Saved flight entries (full detail) */
+  const saveFlightEntry = () => {
+    clearTimeout(_flightSnapTimer);
+    const cur = readJSON(KEYS.flight, {});
+    if (!flightIsMeaningful(cur)) return;
+    const snap = {};
+    FLIGHT_FIELDS.forEach(k => { if (cur[k]) snap[k] = cur[k]; });
+    const list = readJSON(TRAVEL_KEYS.saved, []);
+    if (list.some(s => flightsEqual(s, snap))) { render(); return; }
+    list.push(snap);
+    while (list.length > 30) list.shift();
+    writeJSON(TRAVEL_KEYS.saved, list);
+    render();
+  };
+
+  const applySavedFlight = (t) => {
+    const idx = parseInt(t.dataset.idx, 10);
+    const list = readJSON(TRAVEL_KEYS.saved, []);
+    const pick = list[idx];
+    if (!pick) return;
+    const cur = readJSON(KEYS.flight, {});
+    // Preserve flyHomeDate / returnDate — only overwrite top flight fields
+    const merged = { ...cur };
+    FLIGHT_FIELDS.forEach(k => { merged[k] = pick[k] || ''; });
+    writeJSON(KEYS.flight, merged);
+    closeSavedFlightsSheet();
+  };
+
+  const deleteSavedFlight = (t) => {
+    const idx = parseInt(t.dataset.idx, 10);
+    const list = readJSON(TRAVEL_KEYS.saved, []);
+    const pick = list[idx];
+    if (!pick) return;
+    const label = `${pick.airline || 'Flight'} ${pick.number || ''}`.trim();
+    if (!confirm(`Delete saved flight "${label}"?`)) return;
+    list.splice(idx, 1);
+    writeJSON(TRAVEL_KEYS.saved, list);
+    renderSavedFlightsList();
+  };
+
+  const savedFlightRowHTML = (s, i) => {
+    const airline = esc(s.airline || 'Flight');
+    const number  = esc(s.number || '');
+    const from    = esc((s.from || '').toUpperCase());
+    const to      = esc((s.to   || '').toUpperCase());
+    const time    = esc(s.time || '');
+    return `
+      <div class="saved-flight-row">
+        <button type="button" class="sfr-main" data-action="apply-saved-flight" data-idx="${i}">
+          <div class="sfr-top">
+            <span class="sfr-airline">${airline}</span>
+            <span class="sfr-num mono">${number}</span>
+          </div>
+          <div class="sfr-mid mono">${from || '—'} → ${to || '—'}</div>
+          <div class="sfr-sub mono">${time ? 'Dep ' + time : ''}</div>
+        </button>
+        <button type="button" class="sfr-del" data-action="delete-saved-flight" data-idx="${i}" aria-label="Delete saved flight">🗑</button>
+      </div>`;
+  };
+  const renderSavedFlightsList = () => {
+    const wrap = document.getElementById('saved-flights-list');
+    if (!wrap) return;
+    const list = readJSON(TRAVEL_KEYS.saved, []);
+    if (!list.length) {
+      wrap.innerHTML = `<div class="sfr-empty">No saved flights yet. Tap ☆ Save Route on the Travel card.</div>`;
+      return;
+    }
+    wrap.innerHTML = list.map((s, i) => savedFlightRowHTML(s, i)).join('');
+  };
+  const openSavedFlightsSheet = () => {
+    if (document.getElementById('saved-flights-sheet')) return;
+    document.body.insertAdjacentHTML('beforeend', `
+      <div class="roster-sheet list-sheet" id="saved-flights-sheet">
+        <div class="rs-backdrop" data-action="close-saved-flights"></div>
+        <div class="rs-card hero-card travel-card premium" role="dialog" aria-modal="true" aria-label="Saved flights">
+          <div class="hero-glow" aria-hidden="true"></div>
+          <div class="hero-shine" aria-hidden="true"></div>
+          <div class="rs-swipe-handle" aria-hidden="true"><span></span></div>
+          <div class="hero-badge on-site"><span class="hero-badge-dot"></span>Saved Flights</div>
+          <div class="hero-card-title">Use Previous</div>
+          <div class="saved-flights-list" id="saved-flights-list"></div>
+        </div>
+      </div>`);
+    renderSavedFlightsList();
+    const card = document.querySelector('#saved-flights-sheet .rs-card');
+    if (card && typeof attachSwipeDown === 'function') attachSwipeDown(card, closeSavedFlightsSheet);
+    document.body.style.overflow = 'hidden';
+  };
+  const closeSavedFlightsSheet = () => {
+    document.getElementById('saved-flights-sheet')?.remove();
+    document.body.style.overflow = '';
+    render();
+  };
+
+  /* ── Boarding Pass (single locally-stored image) */
+  const openBoardingPassSheet = () => {
+    if (document.getElementById('boarding-pass-sheet')) return;
+    const img = localStorage.getItem(TRAVEL_KEYS.boarding) || '';
+    document.body.insertAdjacentHTML('beforeend', `
+      <div class="roster-sheet list-sheet" id="boarding-pass-sheet">
+        <div class="rs-backdrop" data-action="close-boarding-pass"></div>
+        <div class="rs-card hero-card travel-card premium" role="dialog" aria-modal="true" aria-label="Boarding pass">
+          <div class="hero-glow" aria-hidden="true"></div>
+          <div class="hero-shine" aria-hidden="true"></div>
+          <div class="rs-swipe-handle" aria-hidden="true"><span></span></div>
+          <div class="hero-badge on-site"><span class="hero-badge-dot"></span>Boarding Pass</div>
+          <div class="hero-card-title">Boarding Pass</div>
+          <div class="boarding-pass-body">
+            ${img
+              ? `<img class="boarding-pass-img" src="${esc(img)}" alt="Boarding pass" />`
+              : `<div class="sfr-empty">No boarding pass saved. Tap Upload to add an image from your device.</div>`}
+          </div>
+          <div class="boarding-pass-actions">
+            <button type="button" class="ff-save-btn" data-action="boarding-upload">
+              <span>⬆</span><span>${img ? 'Replace' : 'Upload'}</span>
+            </button>
+            ${img ? `<button type="button" class="ff-save-btn danger" data-action="boarding-delete">
+              <span>🗑</span><span>Delete</span>
+            </button>` : ''}
+          </div>
+          <input type="file" id="boarding-pass-file" accept="image/*" style="display:none" />
+        </div>
+      </div>`);
+    const card = document.querySelector('#boarding-pass-sheet .rs-card');
+    if (card && typeof attachSwipeDown === 'function') attachSwipeDown(card, closeBoardingPassSheet);
+    const fi = document.getElementById('boarding-pass-file');
+    if (fi) fi.addEventListener('change', onBoardingFileChosen);
+    document.body.style.overflow = 'hidden';
+  };
+  const closeBoardingPassSheet = () => {
+    document.getElementById('boarding-pass-sheet')?.remove();
+    document.body.style.overflow = '';
+    render();
+  };
+  const boardingUpload = () => {
+    document.getElementById('boarding-pass-file')?.click();
+  };
+  const onBoardingFileChosen = (ev) => {
+    const file = ev.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) { alert('Please choose an image file.'); return; }
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        localStorage.setItem(TRAVEL_KEYS.boarding, String(reader.result || ''));
+        closeBoardingPassSheet();
+        openBoardingPassSheet();
+      } catch (e) {
+        alert('That image is too large to save locally. Try a smaller photo.');
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+  const boardingDelete = () => {
+    if (!confirm('Delete saved boarding pass?')) return;
+    localStorage.removeItem(TRAVEL_KEYS.boarding);
+    closeBoardingPassSheet();
+    openBoardingPassSheet();
+  };
+
   const travelQuickActionsHTML = (flight) => {
-    const hist = readJSON(TRAVEL_KEYS.history, []);
     const cur  = flight || {};
-    const hasPrev = hist.some(h => !flightsEqual(h, cur));
-    const routes = readJSON(TRAVEL_KEYS.routes, []);
-    const from = (cur.from || '').toUpperCase();
-    const to   = (cur.to || '').toUpperCase();
-    const isFav = !!(from && to && routes.some(r => routeKey(r) === routeKey({ from, to })));
+    const saved = readJSON(TRAVEL_KEYS.saved, []);
+    const hasSaved = saved.length > 0;
+    const canSave = flightIsMeaningful(cur);
+    const isDupe  = canSave && saved.some(s => flightsEqual(s, cur));
+    const hasPass = !!localStorage.getItem(TRAVEL_KEYS.boarding);
     return `
       <div class="travel-quick-actions">
-        <button type="button" class="tqa-btn" data-action="use-previous-flight"
-                ${hasPrev ? '' : 'disabled aria-disabled="true"'} title="Use most recent flight">
-          <span aria-hidden="true">↺</span> Use Previous
+        <button type="button" class="tqa-btn" data-action="open-saved-flights"
+                ${hasSaved ? '' : 'disabled aria-disabled="true"'} title="Use a saved flight">
+          <span aria-hidden="true">↺</span> Use Previous${hasSaved ? ` (${saved.length})` : ''}
         </button>
-        <button type="button" class="tqa-btn${isFav ? ' active' : ''}" data-action="toggle-fav-route"
-                ${(from && to) ? '' : 'disabled aria-disabled="true"'}
-                title="${isFav ? 'Remove route from favourites' : 'Save route to favourites'}">
-          <span aria-hidden="true">${isFav ? '★' : '☆'}</span> ${isFav ? 'Saved' : 'Save Route'}
+        <button type="button" class="tqa-btn${isDupe ? ' active' : ''}" data-action="save-flight-entry"
+                ${(canSave && !isDupe) ? '' : 'disabled aria-disabled="true"'}
+                title="${isDupe ? 'Already saved' : 'Save these flight details'}">
+          <span aria-hidden="true">${isDupe ? '★' : '☆'}</span> ${isDupe ? 'Saved' : 'Save Route'}
+        </button>
+        <button type="button" class="tqa-btn${hasPass ? ' active' : ''}" data-action="open-boarding-pass"
+                title="${hasPass ? 'View boarding pass' : 'Add boarding pass image'}">
+          <span aria-hidden="true">＋</span> Boarding Pass
         </button>
       </div>`;
   };
@@ -2203,8 +2368,17 @@
     'hero-dot': (t) => goHeroSlide(parseInt(t.dataset.idx, 10)),
     'open-alarm-from-hero': () => { openPanel(); openSubAlarm(); },
     'edit-flight':          editFlightDetails,
-    'use-previous-flight':  usePreviousFlight,
+    'use-previous-flight':  openSavedFlightsSheet,
     'toggle-fav-route':     toggleFavouriteRoute,
+    'save-flight-entry':    saveFlightEntry,
+    'open-saved-flights':   openSavedFlightsSheet,
+    'close-saved-flights':  closeSavedFlightsSheet,
+    'apply-saved-flight':   applySavedFlight,
+    'delete-saved-flight':  deleteSavedFlight,
+    'open-boarding-pass':   openBoardingPassSheet,
+    'close-boarding-pass':  closeBoardingPassSheet,
+    'boarding-upload':      boardingUpload,
+    'boarding-delete':      boardingDelete,
     'hero-save-roster':     heroSaveRoster,
     'open-roster-sheet':    openRosterSheet,
     'close-roster-sheet':   closeRosterSheet,
