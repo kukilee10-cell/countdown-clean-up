@@ -2522,3 +2522,56 @@ input::-webkit-outer-spin-button { -webkit-appearance: none; }
   padding-top: 10px;
   border-top: 1px solid rgba(255,255,255,0.06);
 }
+
+/* ── Saved Flights sheet & Boarding Pass sheet */
+.saved-flights-list {
+  display: flex; flex-direction: column; gap: 10px;
+  max-height: 62vh; overflow-y: auto;
+  padding: 4px 2px 8px;
+  -webkit-overflow-scrolling: touch;
+}
+.saved-flight-row {
+  display: flex; align-items: stretch; gap: 8px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 14px;
+  padding: 4px;
+}
+.saved-flight-row .sfr-main {
+  flex: 1; text-align: left;
+  background: transparent; border: 0; color: var(--text);
+  padding: 10px 12px; border-radius: 10px; cursor: pointer;
+  display: flex; flex-direction: column; gap: 4px;
+}
+.saved-flight-row .sfr-main:active { background: rgba(245,166,35,0.10); }
+.sfr-top { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+.sfr-airline { font-weight: 600; font-size: 15px; }
+.sfr-num { font-size: 13px; color: var(--accent); letter-spacing: 0.04em; }
+.sfr-mid { font-size: 14px; color: var(--text); letter-spacing: 0.06em; }
+.sfr-sub { font-size: 12px; color: var(--muted); }
+.sfr-del {
+  background: transparent; border: 0; color: var(--danger);
+  padding: 0 12px; font-size: 18px; cursor: pointer; border-radius: 10px;
+}
+.sfr-del:active { background: rgba(224,90,78,0.15); }
+.sfr-empty { color: var(--muted); text-align: center; padding: 22px 12px; font-size: 13px; }
+
+.boarding-pass-body {
+  max-height: 58vh; overflow-y: auto;
+  display: flex; align-items: center; justify-content: center;
+  padding: 8px 0 12px;
+}
+.boarding-pass-img {
+  max-width: 100%; max-height: 58vh;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: #000;
+}
+.boarding-pass-actions {
+  display: flex; gap: 10px; margin-top: 10px;
+}
+.boarding-pass-actions .ff-save-btn { flex: 1; }
+.ff-save-btn.danger {
+  background: linear-gradient(180deg, rgba(224,90,78,0.9), rgba(180,60,50,0.9));
+  color: #fff;
+}
