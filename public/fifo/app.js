@@ -27,6 +27,7 @@
     numbers:  'fifo_flight_numbers_v1',
     saved:    'fifo_flight_saved_v1',
     boarding: 'fifo_boarding_pass_v1',
+    boardingOriginal: 'fifo_boarding_pass_original_v1',
   };
 
   // ── Australian airports (code + city) for autocomplete
