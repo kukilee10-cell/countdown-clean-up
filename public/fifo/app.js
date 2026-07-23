@@ -2191,6 +2191,7 @@
   const openBoardingPassSheet = () => {
     if (document.getElementById('boarding-pass-sheet')) return;
     const img = localStorage.getItem(TRAVEL_KEYS.boarding) || '';
+    const orig = localStorage.getItem(TRAVEL_KEYS.boardingOriginal) || '';
     document.body.insertAdjacentHTML('beforeend', `
       <div class="roster-sheet list-sheet" id="boarding-pass-sheet">
         <div class="rs-backdrop" data-action="close-boarding-pass"></div>
@@ -2202,17 +2203,21 @@
           <div class="hero-card-title">Boarding Pass</div>
           <div class="boarding-pass-body">
             ${img
-              ? `<img class="boarding-pass-img" src="${esc(img)}" alt="Boarding pass" />`
+              ? `<img class="boarding-pass-img" data-action="boarding-zoom" src="${esc(img)}" alt="Boarding pass — tap to enlarge" />`
               : `<div class="sfr-empty">No boarding pass saved. Tap Upload to add an image from your device.</div>`}
           </div>
           <div class="boarding-pass-actions">
             <button type="button" class="ff-save-btn" data-action="boarding-upload">
               <span>⬆</span><span>${img ? 'Replace' : 'Upload'}</span>
             </button>
+            ${img ? `<button type="button" class="ff-save-btn" data-action="boarding-crop">
+              <span>✂</span><span>Adjust crop</span>
+            </button>` : ''}
             ${img ? `<button type="button" class="ff-save-btn danger" data-action="boarding-delete">
               <span>🗑</span><span>Delete</span>
             </button>` : ''}
           </div>
+          ${img && orig && orig !== img ? `<div class="boarding-pass-hint">Auto-cropped from your screenshot. Original is kept as backup.</div>` : ''}
           <input type="file" id="boarding-pass-file" accept="image/*" style="display:none" />
         </div>
       </div>`);
@@ -2236,21 +2241,260 @@
     if (!file.type.startsWith('image/')) { alert('Please choose an image file.'); return; }
     const reader = new FileReader();
     reader.onload = () => {
-      try {
-        localStorage.setItem(TRAVEL_KEYS.boarding, String(reader.result || ''));
-        closeBoardingPassSheet();
-        openBoardingPassSheet();
-      } catch (e) {
-        alert('That image is too large to save locally. Try a smaller photo.');
-      }
+      const dataUrl = String(reader.result || '');
+      autoCropBoardingPass(dataUrl).then(({ cropped, ok }) => {
+        try {
+          localStorage.setItem(TRAVEL_KEYS.boardingOriginal, dataUrl);
+          localStorage.setItem(TRAVEL_KEYS.boarding, cropped || dataUrl);
+          closeBoardingPassSheet();
+          openBoardingPassSheet();
+          if (!ok) {
+            // Auto-crop failed — offer manual crop
+            setTimeout(() => openBoardingCropSheet(), 60);
+          }
+        } catch (e) {
+          alert('That image is too large to save locally. Try a smaller photo.');
+        }
+      });
     };
     reader.readAsDataURL(file);
   };
   const boardingDelete = () => {
     if (!confirm('Delete saved boarding pass?')) return;
     localStorage.removeItem(TRAVEL_KEYS.boarding);
+    localStorage.removeItem(TRAVEL_KEYS.boardingOriginal);
     closeBoardingPassSheet();
     openBoardingPassSheet();
+  };
+
+  /* ── Auto-crop: detect boarding pass rectangle inside a phone screenshot.
+     Strategy: sample background colour from the 4 corners; find bounding box
+     of pixels that differ from that background beyond a threshold. Works well
+     when the pass sits on a mostly-uniform phone UI background. */
+  const autoCropBoardingPass = (dataUrl) => new Promise((resolve) => {
+    try {
+      const im = new Image();
+      im.onload = () => {
+        try {
+          const W = im.naturalWidth, H = im.naturalHeight;
+          if (!W || !H) return resolve({ cropped: null, ok: false });
+          // Downscale for analysis
+          const SCALE = Math.min(1, 400 / Math.max(W, H));
+          const aw = Math.max(1, Math.round(W * SCALE));
+          const ah = Math.max(1, Math.round(H * SCALE));
+          const ac = document.createElement('canvas');
+          ac.width = aw; ac.height = ah;
+          const ax = ac.getContext('2d', { willReadFrequently: true });
+          ax.drawImage(im, 0, 0, aw, ah);
+          const data = ax.getImageData(0, 0, aw, ah).data;
+          // Sample corners for bg colour
+          const samples = [];
+          const push = (x,y) => { const i=(y*aw+x)*4; samples.push([data[i],data[i+1],data[i+2]]); };
+          for (let dx=0; dx<6; dx++) for (let dy=0; dy<6; dy++) {
+            push(dx,dy); push(aw-1-dx,dy); push(dx,ah-1-dy); push(aw-1-dx,ah-1-dy);
+          }
+          const bg = [0,1,2].map(k => samples.reduce((s,p)=>s+p[k],0)/samples.length);
+          const THR = 42; // colour distance threshold
+          let minX = aw, minY = ah, maxX = -1, maxY = -1;
+          for (let y = 0; y < ah; y++) {
+            for (let x = 0; x < aw; x++) {
+              const i = (y*aw+x)*4;
+              const d = Math.abs(data[i]-bg[0]) + Math.abs(data[i+1]-bg[1]) + Math.abs(data[i+2]-bg[2]);
+              if (d > THR) {
+                if (x < minX) minX = x;
+                if (y < minY) minY = y;
+                if (x > maxX) maxX = x;
+                if (y > maxY) maxY = y;
+              }
+            }
+          }
+          if (maxX < 0 || maxY < 0) return resolve({ cropped: null, ok: false });
+          // Small padding, map back to full resolution
+          const pad = 2;
+          minX = Math.max(0, minX - pad); minY = Math.max(0, minY - pad);
+          maxX = Math.min(aw-1, maxX + pad); maxY = Math.min(ah-1, maxY + pad);
+          const bw = maxX - minX + 1, bh = maxY - minY + 1;
+          // Sanity checks — must cover meaningful area but not be the whole image
+          const areaFrac = (bw * bh) / (aw * ah);
+          if (areaFrac < 0.15 || areaFrac > 0.985) return resolve({ cropped: null, ok: false });
+          const sx = Math.round(minX / SCALE);
+          const sy = Math.round(minY / SCALE);
+          const sw = Math.round(bw / SCALE);
+          const sh = Math.round(bh / SCALE);
+          const oc = document.createElement('canvas');
+          oc.width = sw; oc.height = sh;
+          const ox = oc.getContext('2d');
+          ox.drawImage(im, sx, sy, sw, sh, 0, 0, sw, sh);
+          // Prefer PNG to preserve barcode sharpness; fall back to JPEG if huge
+          let out = oc.toDataURL('image/png');
+          if (out.length > 900_000) out = oc.toDataURL('image/jpeg', 0.92);
+          resolve({ cropped: out, ok: true });
+        } catch { resolve({ cropped: null, ok: false }); }
+      };
+      im.onerror = () => resolve({ cropped: null, ok: false });
+      im.src = dataUrl;
+    } catch { resolve({ cropped: null, ok: false }); }
+  });
+
+  /* ── Full-screen lightbox */
+  const openBoardingZoom = () => {
+    const img = localStorage.getItem(TRAVEL_KEYS.boarding) || '';
+    if (!img) return;
+    if (document.getElementById('boarding-zoom')) return;
+    document.body.insertAdjacentHTML('beforeend', `
+      <div id="boarding-zoom" role="dialog" aria-modal="true" aria-label="Boarding pass full view">
+        <button type="button" class="bz-close" aria-label="Close" data-action="close-boarding-zoom">✕</button>
+        <img class="bz-img" src="${esc(img)}" alt="Boarding pass" />
+      </div>`);
+  };
+  const closeBoardingZoom = () => { document.getElementById('boarding-zoom')?.remove(); };
+
+  /* ── Manual crop sheet — drag corners over original image */
+  const openBoardingCropSheet = () => {
+    const src = localStorage.getItem(TRAVEL_KEYS.boardingOriginal)
+             || localStorage.getItem(TRAVEL_KEYS.boarding) || '';
+    if (!src) return;
+    if (document.getElementById('boarding-crop-sheet')) return;
+    document.body.insertAdjacentHTML('beforeend', `
+      <div class="roster-sheet list-sheet" id="boarding-crop-sheet">
+        <div class="rs-backdrop" data-action="close-boarding-crop"></div>
+        <div class="rs-card hero-card travel-card premium" role="dialog" aria-modal="true" aria-label="Adjust crop">
+          <div class="hero-glow" aria-hidden="true"></div>
+          <div class="rs-swipe-handle" aria-hidden="true"><span></span></div>
+          <div class="hero-badge on-site"><span class="hero-badge-dot"></span>Adjust Crop</div>
+          <div class="hero-card-title">Drag the corners</div>
+          <div class="bc-stage">
+            <img class="bc-img" src="${esc(src)}" alt="Original boarding pass" />
+            <div class="bc-box" id="bc-box">
+              <span class="bc-h tl"></span><span class="bc-h tr"></span>
+              <span class="bc-h bl"></span><span class="bc-h br"></span>
+            </div>
+          </div>
+          <div class="boarding-pass-actions">
+            <button type="button" class="ff-save-btn" data-action="boarding-crop-apply">
+              <span>✓</span><span>Apply crop</span>
+            </button>
+            <button type="button" class="ff-save-btn" data-action="boarding-crop-reset">
+              <span>↺</span><span>Use original</span>
+            </button>
+          </div>
+        </div>
+      </div>`);
+    const card = document.querySelector('#boarding-crop-sheet .rs-card');
+    if (card && typeof attachSwipeDown === 'function') attachSwipeDown(card, closeBoardingCropSheet);
+    document.body.style.overflow = 'hidden';
+    const imgEl = card.querySelector('.bc-img');
+    const box = card.querySelector('#bc-box');
+    const initBox = () => {
+      const r = imgEl.getBoundingClientRect();
+      const sr = imgEl.parentElement.getBoundingClientRect();
+      const w = r.width, h = r.height;
+      const bw = w * 0.86, bh = h * 0.7;
+      const left = (r.left - sr.left) + (w - bw) / 2;
+      const top  = (r.top  - sr.top ) + (h - bh) / 2;
+      Object.assign(box.style, { left: left+'px', top: top+'px', width: bw+'px', height: bh+'px' });
+    };
+    if (imgEl.complete) initBox(); else imgEl.addEventListener('load', initBox);
+    attachCropDrag(box, imgEl);
+  };
+  const closeBoardingCropSheet = () => {
+    document.getElementById('boarding-crop-sheet')?.remove();
+    document.body.style.overflow = '';
+  };
+  const attachCropDrag = (box, imgEl) => {
+    const stage = box.parentElement;
+    const bounds = () => {
+      const r = imgEl.getBoundingClientRect();
+      const sr = stage.getBoundingClientRect();
+      return { left: r.left - sr.left, top: r.top - sr.top, width: r.width, height: r.height };
+    };
+    let mode = null, sx = 0, sy = 0, orig = null;
+    const onDown = (e) => {
+      const t = e.target;
+      const isHandle = t.classList && t.classList.contains('bc-h');
+      mode = isHandle ? t.className.split(' ').pop() : 'move';
+      const p = e.touches ? e.touches[0] : e;
+      sx = p.clientX; sy = p.clientY;
+      orig = { left: parseFloat(box.style.left), top: parseFloat(box.style.top),
+               w: parseFloat(box.style.width), h: parseFloat(box.style.height) };
+      e.preventDefault();
+    };
+    const onMove = (e) => {
+      if (!mode) return;
+      const p = e.touches ? e.touches[0] : e;
+      const dx = p.clientX - sx, dy = p.clientY - sy;
+      const b = bounds();
+      let { left, top, w, h } = orig;
+      const MIN = 40;
+      if (mode === 'move') { left += dx; top += dy; }
+      if (mode === 'tl')   { left += dx; top += dy; w -= dx; h -= dy; }
+      if (mode === 'tr')   { top  += dy; w  += dx; h  -= dy; }
+      if (mode === 'bl')   { left += dx; w  -= dx; h  += dy; }
+      if (mode === 'br')   { w    += dx; h  += dy; }
+      if (w < MIN) { if (mode.includes('l')) left -= (MIN - w); w = MIN; }
+      if (h < MIN) { if (mode.includes('t')) top  -= (MIN - h); h = MIN; }
+      if (left < b.left) { if (mode !== 'move') w -= (b.left - left); left = b.left; }
+      if (top  < b.top ) { if (mode !== 'move') h -= (b.top  - top ); top  = b.top;  }
+      if (left + w > b.left + b.width)  { if (mode === 'move') left = b.left + b.width - w; else w = b.left + b.width - left; }
+      if (top  + h > b.top  + b.height) { if (mode === 'move') top  = b.top  + b.height - h; else h = b.top  + b.height - top; }
+      Object.assign(box.style, { left: left+'px', top: top+'px', width: w+'px', height: h+'px' });
+      e.preventDefault();
+    };
+    const onUp = () => { mode = null; };
+    box.addEventListener('mousedown', onDown);
+    box.addEventListener('touchstart', onDown, { passive: false });
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('touchmove', onMove, { passive: false });
+    window.addEventListener('mouseup', onUp);
+    window.addEventListener('touchend', onUp);
+  };
+  const boardingCropApply = () => {
+    const sheet = document.getElementById('boarding-crop-sheet');
+    if (!sheet) return;
+    const imgEl = sheet.querySelector('.bc-img');
+    const box = sheet.querySelector('#bc-box');
+    const src = localStorage.getItem(TRAVEL_KEYS.boardingOriginal)
+             || localStorage.getItem(TRAVEL_KEYS.boarding) || '';
+    if (!imgEl || !box || !src) return;
+    const stage = imgEl.parentElement;
+    const sr = stage.getBoundingClientRect();
+    const ir = imgEl.getBoundingClientRect();
+    const br = box.getBoundingClientRect();
+    // Map box (relative to stage) into image natural coordinates
+    const relX = (br.left - ir.left) / ir.width;
+    const relY = (br.top  - ir.top)  / ir.height;
+    const relW = br.width  / ir.width;
+    const relH = br.height / ir.height;
+    const im = new Image();
+    im.onload = () => {
+      const sx = Math.max(0, Math.round(relX * im.naturalWidth));
+      const sy = Math.max(0, Math.round(relY * im.naturalHeight));
+      const sw = Math.min(im.naturalWidth  - sx, Math.round(relW * im.naturalWidth));
+      const sh = Math.min(im.naturalHeight - sy, Math.round(relH * im.naturalHeight));
+      if (sw < 8 || sh < 8) return;
+      const oc = document.createElement('canvas');
+      oc.width = sw; oc.height = sh;
+      oc.getContext('2d').drawImage(im, sx, sy, sw, sh, 0, 0, sw, sh);
+      let out = oc.toDataURL('image/png');
+      if (out.length > 900_000) out = oc.toDataURL('image/jpeg', 0.92);
+      try {
+        localStorage.setItem(TRAVEL_KEYS.boarding, out);
+        closeBoardingCropSheet();
+        closeBoardingPassSheet();
+        openBoardingPassSheet();
+      } catch { alert('Cropped image too large to save.'); }
+    };
+    im.src = src;
+  };
+  const boardingCropReset = () => {
+    const src = localStorage.getItem(TRAVEL_KEYS.boardingOriginal);
+    if (!src) { closeBoardingCropSheet(); return; }
+    try {
+      localStorage.setItem(TRAVEL_KEYS.boarding, src);
+      closeBoardingCropSheet();
+      closeBoardingPassSheet();
+      openBoardingPassSheet();
+    } catch {}
   };
 
   const travelQuickActionsHTML = (flight) => {
